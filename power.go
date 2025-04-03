@@ -224,6 +224,19 @@ func (m *CriticalPowerModel) PredictTime(power float64) (float64, error) {
 	return m.Wprime/(power-m.CP) - m.Tau, nil
 }
 
+func (m *CriticalPowerModel) predict5minPower() float64 {
+	max5minPower := m.PredictPower(300)
+	return max5minPower
+}
+
+// PredictVO2Max
+// https://pubmed.ncbi.nlm.nih.gov/34225254/
+// Five-Minute Power-Based Test to Predict Maximal Oxygen Consumption in Road Cycling
+func (m *CriticalPowerModel) PredictVO2Max(weight float64) float64 {
+	// VO2max (ml/kg/min) = 10.8 * 5分钟相对功率(W/kg) +7
+	return 16.6 + 8.87*(m.predict5minPower()/weight)
+}
+
 type zone struct {
 	Min float64
 	Max float64

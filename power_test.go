@@ -32,17 +32,21 @@ func TestMain(t *testing.T) {
 	t.Logf("时间常数 (Tau): %.1f 秒\n", model.Tau)
 
 	// 预测60分钟的最大功率
-	t.Logf("预测60分钟的最大功率: %.1f 瓦特\n", model.PredictPower(60*60))
+	t.Logf("预测5分钟的最大功率: %.1f 瓦特\n", model.PredictPower(60*5))
 
-	// 预测维持Vo2max.Min的时间
+	// 预测维持VO2Max.Min的时间
 	duration, err := model.PredictTime(model.GetTrainingZones().VO2MaxZone.Min)
 	if err != nil {
 		t.Logf("预测失败: %v\n", err)
 	} else {
-		t.Logf("预测维持Vo2max.Min的最大时间: %.1f 秒\n", duration)
+		t.Logf("预测维持VO2Max.Min的最大时间: %.1f 秒\n", duration)
 	}
 
-	// 输出训练区间
+	// 预测Vo2max
+	VO2Max := model.PredictVO2Max(70)
+	t.Logf("预测VO2Max: %.1f ml/kg/min\n", VO2Max)
+
+	// 训练区间
 	t.Log("训练区间:")
 	zones := model.GetTrainingZones()
 	t.Log("恢复区间:", zones.RecoveryZone)
