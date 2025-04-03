@@ -5,6 +5,8 @@ import (
 	"errors"
 	"math"
 	"math/rand/v2"
+	"runtime"
+	"sync"
 )
 
 // PowerTimePoint 代表功率-时间测试的一个数据点
@@ -45,10 +47,6 @@ func (m *CriticalPowerModel) Fit(data []PowerTimePoint) error {
 		return errors.New("至少需要3个数据点来拟合三参数模型")
 	}
 
-	// 为了更稳健的拟合，我们可以多次运行优化算法，选择最佳结果
-	bestCP, bestWprime, bestTau := 0.0, 0.0, 0.0
-	bestError := math.Inf(1)
-
 	// 获取数据中的最大功率作为参考
 	maxPower := 0.0
 	for _, point := range data {
@@ -57,29 +55,56 @@ func (m *CriticalPowerModel) Fit(data []PowerTimePoint) error {
 		}
 	}
 
-	// 运行多次优化，选择最佳结果
 	numRuns := m.numRuns
-	for run := 0; run < numRuns; run++ {
-		// 随机初始参数（在合理范围内）
-		initialCP := maxPower * (0.5 + 0.2*rand.Float64()) // CP在最大功率的50-70%
-		initialWprime := 10000 + 20000*rand.Float64()      // W'在10,000-30,000焦耳
-		initialTau := 1 + 14*rand.Float64()                // τ在1-15秒
+	workers := runtime.NumCPU()
+	var wg sync.WaitGroup
+	tasks := make(chan struct{}, numRuns)
+	results := make(chan struct {
+		cp     float64
+		wprime float64
+		tau    float64
+		mse    float64
+	}, numRuns)
 
-		// 运行优化
-		cp, wprime, tau, err := optimizeModel(data, initialCP, initialWprime, initialTau)
-		if err != nil {
-			continue
-		}
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for range tasks {
+				initialCP := maxPower * (0.5 + 0.2*rand.Float64())
+				initialWprime := 10000 + 20000*rand.Float64()
+				initialTau := 1 + 14*rand.Float64()
+				cp, wprime, tau, err := optimizeModel(data, initialCP, initialWprime, initialTau)
+				if err != nil {
+					continue
+				}
+				mse := meanSquaredError(data, cp, wprime, tau)
+				results <- struct {
+					cp     float64
+					wprime float64
+					tau    float64
+					mse    float64
+				}{cp, wprime, tau, mse}
+			}
+		}()
+	}
 
-		// 计算误差
-		mse := meanSquaredError(data, cp, wprime, tau)
+	for i := 0; i < numRuns; i++ {
+		tasks <- struct{}{}
+	}
+	close(tasks)
 
-		// 如果找到更好的解
-		if mse < bestError {
-			bestCP = cp
-			bestWprime = wprime
-			bestTau = tau
-			bestError = mse
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	bestCP, bestWprime, bestTau := 0.0, 0.0, 0.0
+	bestError := math.Inf(1)
+	for res := range results {
+		if res.mse < bestError {
+			bestError = res.mse
+			bestCP, bestWprime, bestTau = res.cp, res.wprime, res.tau
 		}
 	}
 
@@ -87,7 +112,6 @@ func (m *CriticalPowerModel) Fit(data []PowerTimePoint) error {
 		return errors.New("模型拟合失败")
 	}
 
-	// 设置模型参数
 	m.CP = bestCP
 	m.Wprime = bestWprime
 	m.Tau = bestTau
