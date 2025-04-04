@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultsContent = document.getElementById('resultsContent');
     const useExampleDataBtn = document.getElementById('useExampleData');
     const calculateBtn = document.getElementById('calculate');
+    
+    // 添加请求状态跟踪变量
+    let requestActive = false;
+    let requestCancelled = false;
 
     // 从本地存储加载数据
     loadFromLocalStorage();
@@ -79,6 +83,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // 表单提交
     form.addEventListener('submit', function(e) {
         e.preventDefault();
+        
+        // 重置请求状态标记
+        requestCancelled = false;
+        requestActive = true;
         
         // 收集数据
         const pointRows = document.querySelectorAll('.point-row');
@@ -243,6 +251,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
+            // 检查请求是否已被取消
+            if (requestCancelled) {
+                console.log('请求已被取消，忽略返回的数据');
+                requestActive = false;
+                return;
+            }
+            
             // 移除蒙版（如果存在）
             const overlay = resultsContent.querySelector('.results-overlay');
             if (overlay) {
@@ -255,6 +270,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // 保存结果到本地存储
             saveResultsToLocalStorage(data);
+            
+            // 重置请求状态
+            requestActive = false;
         })
         .catch(error => {
             resultsContent.innerHTML = `
@@ -272,8 +290,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 重置按钮行为
     form.addEventListener('reset', function() {
+        // 标记当前请求需要被取消
+        if (requestActive) {
+            requestCancelled = true;
+        }
+        
         // 重置结果显示
         resultsContent.innerHTML = '<p class="placeholder">请输入数据</p>';
+        
+        // 移除可能存在的蒙版
+        const overlay = resultsContent.querySelector('.results-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
         
         // 清除所有数据点行并添加一个空行
         pointsContainer.innerHTML = '';
@@ -283,6 +312,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // 清除本地存储
         clearLocalStorage();
+        
+        // 确保计算按钮可用
+        calculateBtn.disabled = false;
+        calculateBtn.innerHTML = '计算模型';
     });
 
     // 创建数据点行
