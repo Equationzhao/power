@@ -16,6 +16,14 @@ Five-Minute Power-Based Test to Predict Maximal Oxygen Consumption in Road Cycli
 `VO2max = 16.6 + (8.87 × 5 min relative power output)`
 
 
+## 前端展示
+
+![](assets/main.png)
+
+![](assets/curve.png)
+
+
+
 ## 如何运行
 
 - 启动服务：执行 `go run ./...`，服务默认监听在 `:8080` 端口。
