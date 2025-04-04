@@ -7,6 +7,7 @@ import (
 	"math/rand/v2"
 	"runtime"
 	"sync"
+	"time"
 )
 
 // PowerTimePoint 代表功率-时间测试的一个数据点
@@ -26,15 +27,21 @@ type CriticalPowerModel struct {
 	numRuns int // 运行次数
 }
 
+const DefaultNumRuns = 10000
+
 func New() *CriticalPowerModel {
 	m := &CriticalPowerModel{
-		numRuns: 10000, // 默认运行次数
+		numRuns: DefaultNumRuns,
 	}
 	return m
 }
 
 // NewWithRunTimes 指定运行次数
 func NewWithRunTimes(numRuns int) *CriticalPowerModel {
+	if numRuns <= 0 {
+		numRuns = DefaultNumRuns
+	}
+
 	m := &CriticalPowerModel{
 		numRuns: numRuns,
 	}
@@ -235,6 +242,15 @@ func (m *CriticalPowerModel) predict5minPower() float64 {
 func (m *CriticalPowerModel) PredictVO2Max(weight float64) float64 {
 	// VO2max (ml/kg/min) = 10.8 * 5分钟相对功率(W/kg) +7
 	return 16.6 + 8.87*(m.predict5minPower()/weight)
+}
+
+// PredictCurve 使用模型预测from到to内每秒的最大功率输出。
+func (m *CriticalPowerModel) PredictCurve(from, to time.Duration) []float64 {
+	curve := make([]float64, 3600)
+	for i := from / time.Second; i <= to/time.Second; i++ {
+		curve[i-1] = m.PredictPower(float64(i))
+	}
+	return curve
 }
 
 type zone struct {

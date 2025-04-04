@@ -3,10 +3,10 @@ package criticalpower_test
 import (
 	"testing"
 
-	"criticalpower"
+	"github.com/Equationzhao/power/criticalpower"
 )
 
-func TestMain(t *testing.T) {
+func TestPowerModel(t *testing.T) {
 	model := criticalpower.NewWithRunTimes(100000)
 
 	data := []criticalpower.PowerTimePoint{
