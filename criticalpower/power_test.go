@@ -27,7 +27,7 @@ func TestPowerModel(t *testing.T) {
 
 	t.Log("模型参数:")
 	t.Logf("临界功率 (CP): %.1f 瓦特\n", model.CP)
-	t.Logf("无氧工作容量 (W'): %.0f 焦耳\n", model.Wprime)
+	t.Logf("无氧储备 (Anaerobic Reserve, W'): %.0f 焦耳\n", model.Wprime)
 	t.Logf("最大瞬时功率 (Pmax): %.1f 瓦特\n", model.Pmax)
 	t.Logf("时间常数 (Tau): %.1f 秒\n", model.Tau)
 

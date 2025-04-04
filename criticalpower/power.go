@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand/v2"
 	"runtime"
+	"slices"
 	"sync"
 	"time"
 )
@@ -54,13 +55,27 @@ func (m *CriticalPowerModel) Fit(data []PowerTimePoint) error {
 		return errors.New("至少需要3个数据点来拟合三参数模型")
 	}
 
-	// 获取数据中的最大功率作为参考
+	// 获取数据中的最大功率和最小功率
 	maxPower := 0.0
+	minPower := math.MaxFloat64
 	for _, point := range data {
 		if point.Power > maxPower {
 			maxPower = point.Power
 		}
+		if point.Power < minPower {
+			minPower = point.Power
+		}
 	}
+
+	// 预估CP范围，一般来说CP约为所有功率点的下四分位数到最小功率之间的值
+	powerList := make([]float64, len(data))
+	for i, point := range data {
+		powerList[i] = point.Power
+	}
+	slices.Sort(powerList)
+	lowerQuartileIndex := len(powerList) / 4
+	estimatedMinCP := minPower * 0.9
+	estimatedMaxCP := powerList[lowerQuartileIndex]
 
 	numRuns := m.numRuns
 	workers := runtime.NumCPU()
@@ -71,6 +86,7 @@ func (m *CriticalPowerModel) Fit(data []PowerTimePoint) error {
 		wprime float64
 		tau    float64
 		mse    float64
+		mrse   float64
 	}, numRuns)
 
 	for i := 0; i < workers; i++ {
@@ -78,20 +94,23 @@ func (m *CriticalPowerModel) Fit(data []PowerTimePoint) error {
 		go func() {
 			defer wg.Done()
 			for range tasks {
-				initialCP := maxPower * (0.5 + 0.2*rand.Float64())
-				initialWprime := 10000 + 20000*rand.Float64()
-				initialTau := 1 + 14*rand.Float64()
+				initialCP := estimatedMinCP + rand.Float64()*(estimatedMaxCP-estimatedMinCP)
+				initialWprime := 5000 + 30000*rand.Float64()
+				initialTau := 0.5 + 25*rand.Float64()
+
 				cp, wprime, tau, err := optimizeModel(data, initialCP, initialWprime, initialTau)
 				if err != nil {
 					continue
 				}
-				mse := meanSquaredError(data, cp, wprime, tau)
+				mrse := relativeMeanSquaredError(data, cp, wprime, tau)
+				mse := absoluteMeanSquaredError(data, cp, wprime, tau)
 				results <- struct {
 					cp     float64
 					wprime float64
 					tau    float64
 					mse    float64
-				}{cp, wprime, tau, mse}
+					mrse   float64
+				}{cp, wprime, tau, mse, mrse}
 			}
 		}()
 	}
@@ -108,9 +127,11 @@ func (m *CriticalPowerModel) Fit(data []PowerTimePoint) error {
 
 	bestCP, bestWprime, bestTau := 0.0, 0.0, 0.0
 	bestError := math.Inf(1)
+	bestErrorAbsolute := math.Inf(1)
 	for res := range results {
-		if res.mse < bestError {
-			bestError = res.mse
+		if res.mrse < bestError {
+			bestError = res.mrse
+			bestErrorAbsolute = res.mse
 			bestCP, bestWprime, bestTau = res.cp, res.wprime, res.tau
 		}
 	}
@@ -123,7 +144,7 @@ func (m *CriticalPowerModel) Fit(data []PowerTimePoint) error {
 	m.Wprime = bestWprime
 	m.Tau = bestTau
 	m.Pmax = bestCP + bestWprime/bestTau
-	m.RMSE = math.Sqrt(bestError)
+	m.RMSE = math.Sqrt(bestErrorAbsolute)
 
 	return nil
 }
@@ -135,41 +156,70 @@ func optimizeModel(data []PowerTimePoint, initialCP, initialWprime, initialTau f
 	wprime = initialWprime
 	tau = initialTau
 
-	// 模拟退火参数
-	temperature := 1000.0
-	coolingRate := 0.99
-	iterations := 10000
-	minTemperature := 0.1
+	// 改进的模拟退火参数
+	temperature := 2000.0    // 更高的初始温度提供更大的搜索范围
+	finalTemperature := 0.01 // 更低的最终温度提高精度
+	coolingRate := 0.97      // 更慢的冷却速率允许更充分的搜索
+	iterations := 20000      // 更多迭代次数
+
+	// 记录没有改进的次数
+	noImprovementCount := 0
+	maxNoImprovements := 1000 // 如果1000次迭代没有改进，重新加热
+
+	// 自适应步长
+	cpStep := 5.0
+	wprimeStep := 1000.0
+	tauStep := 1.0
 
 	// 当前解的误差
-	currentError := meanSquaredError(data, cp, wprime, tau)
+	currentError := relativeMeanSquaredError(data, cp, wprime, tau)
 
 	// 最佳解
 	bestCP, bestWprime, bestTau := cp, wprime, tau
 	bestError := currentError
 
-	for i := 0; i < iterations && temperature > minTemperature; i++ {
+	for iter := 0; iter < iterations && temperature > finalTemperature; iter++ {
+		// 使用自适应步长
+		cpStepSize := cpStep * temperature / 2000.0
+		wprimeStepSize := wprimeStep * temperature / 2000.0
+		tauStepSize := tauStep * temperature / 2000.0
+
 		// 生成新的候选解
-		newCP := cp + (rand.Float64()*2-1)*temperature*0.1
-		newWprime := wprime + (rand.Float64()*2-1)*temperature*100
-		newTau := tau + (rand.Float64()*2-1)*temperature*0.1
+		newCP := cp + (rand.Float64()*2-1)*cpStepSize
+		newWprime := wprime + (rand.Float64()*2-1)*wprimeStepSize
+		newTau := tau + (rand.Float64()*2-1)*tauStepSize
 
 		// 确保参数在合理范围内
-		if newCP < 100 {
-			newCP = 100
+		if newCP < 50 {
+			newCP = 50
 		}
-		if newWprime < 1000 {
-			newWprime = 1000
+		if newWprime < 500 {
+			newWprime = 500
 		}
-		if newTau < 1 {
-			newTau = 1
+		if newTau < 0.5 {
+			newTau = 0.5
 		}
 
 		// 计算新解的误差
-		newError := meanSquaredError(data, newCP, newWprime, newTau)
+		newError := relativeMeanSquaredError(data, newCP, newWprime, newTau)
 
 		// 决定是否接受新解
-		if newError < currentError || rand.Float64() < math.Exp((currentError-newError)/temperature) {
+		acceptNewSolution := false
+
+		// 如果新解更好，总是接受
+		if newError < currentError {
+			acceptNewSolution = true
+		} else {
+			// 如果新解更差，以一定概率接受（模拟退火的核心）
+			// 概率随着温度降低而减小，随着解的差异增大而减小
+			delta := newError - currentError
+			acceptanceProbability := math.Exp(-delta / temperature)
+			if rand.Float64() < acceptanceProbability {
+				acceptNewSolution = true
+			}
+		}
+
+		if acceptNewSolution {
 			cp, wprime, tau = newCP, newWprime, newTau
 			currentError = newError
 
@@ -177,23 +227,34 @@ func optimizeModel(data []PowerTimePoint, initialCP, initialWprime, initialTau f
 			if currentError < bestError {
 				bestCP, bestWprime, bestTau = cp, wprime, tau
 				bestError = currentError
+				noImprovementCount = 0 // 重置无改进计数
+			} else {
+				noImprovementCount++
 			}
+		} else {
+			noImprovementCount++
 		}
 
-		// 降温
-		temperature *= coolingRate
+		// 如果长时间没有改进，重新加热
+		if noImprovementCount >= maxNoImprovements {
+			temperature = temperature * 1.5 // 重新加热
+			noImprovementCount = 0          // 重置计数器
+		} else {
+			// 正常降温
+			temperature *= coolingRate
+		}
 	}
 
 	// 如果最终误差太大，可能拟合失败
-	if bestError > 10000 {
+	if bestError > 1000 {
 		return 0, 0, 0, errors.New("优化失败：误差过大")
 	}
 
 	return bestCP, bestWprime, bestTau, nil
 }
 
-// 计算模型预测的均方误差
-func meanSquaredError(data []PowerTimePoint, cp, wprime, tau float64) float64 {
+// 计算绝对均方误差(MSE)
+func absoluteMeanSquaredError(data []PowerTimePoint, cp, wprime, tau float64) float64 {
 	var sumSquaredError float64
 
 	for _, point := range data {
@@ -207,6 +268,28 @@ func meanSquaredError(data []PowerTimePoint, cp, wprime, tau float64) float64 {
 		sumSquaredError += err * err
 	}
 
+	return sumSquaredError / float64(len(data))
+}
+
+// 计算相对均方误差(MSRE)
+func relativeMeanSquaredError(data []PowerTimePoint, cp, wprime, tau float64) float64 {
+	var sumSquaredError float64
+
+	for _, point := range data {
+		t := point.Time
+		observedPower := point.Power
+
+		// 模型预测的功率：P(t) = (W' + CP × (t + τ))/(t + τ)
+		predictedPower := (wprime + cp*(t+tau)) / (t + tau)
+
+		err := predictedPower - observedPower
+		// 使用相对误差的平方，这样可以使模型更加重视低功率区域的拟合
+		// 避免高功率点支配误差计算
+		relativeErr := err / observedPower
+		sumSquaredError += relativeErr * relativeErr
+	}
+
+	// 使用均方相对误差
 	return sumSquaredError / float64(len(data))
 }
 

@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 `
             },
             wprime: {
-                title: "无氧工作容量 (W')",
+                title: "无氧储备 (Anaerobic Reserve, W')",
                 body: `
                     <h4>定义：</h4>
                     <p>运动员在超过临界功率强度时可以完成的总工作量，单位为焦耳(J)或千焦(kJ)。</p>
@@ -505,30 +505,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: `
                     <h4>定义：</h4>
                     <p>评估临界功率模型拟合质量的统计指标，代表模型预测值与实际测量值之间差异的标准差。</p>
-                    
-                    <h4>计算：</h4>
-                    <p>RMSE = √[(Σ(预测值 - 实际值)²)/n]</p>
-                    
-                    <h4>重要性：</h4>
-                    <ul>
-                        <li>反映模型预测准确性</li>
-                        <li>较低的RMSE表示更好的拟合质量</li>
-                        <li>帮助比较不同模型(双参数vs三参数)的优劣</li>
-                    </ul>
-                    
-                    <h4>典型值：</h4>
-                    <ul>
-                        <li>高质量拟合: RMSE < 2-3%</li>
-                        <li>可接受拟合: RMSE 3-5%</li>
-                        <li>较差拟合: RMSE > 5%</li>
-                    </ul>
-                    
-                    <h4>应用：</h4>
-                    <ul>
-                        <li>模型选择依据</li>
-                        <li>识别异常测试数据</li>
-                        <li>量化预测的可靠性</li>
-                    </ul>
                 `
             },
             vo2max: {
