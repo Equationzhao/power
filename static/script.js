@@ -340,47 +340,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 显示功率-时间曲线弹窗
     function showPowerTimeCurvePopup(curveData) {
-        const getComputedColor = (varName) => {
-            const computedStyle = getComputedStyle(document.documentElement);
-            const color = computedStyle.getPropertyValue(varName).trim();
-            return convertToRGBA(color, 0.1);
-        };
-        
-        const convertToRGBA = (color, alpha) => {
-            if (color.startsWith('#')) {
-                let r = 0, g = 0, b = 0;
-                if (color.length === 4) {
-                    r = parseInt(color[1] + color[1], 16);
-                    g = parseInt(color[2] + color[2], 16);
-                    b = parseInt(color[3] + color[3], 16);
-                } else if (color.length === 7) {
-                    r = parseInt(color.substr(1, 2), 16);
-                    g = parseInt(color.substr(3, 2), 16);
-                    b = parseInt(color.substr(5, 2), 16);
-                }
-                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-            }
-            if (color.startsWith('rgb(')) {
-                const rgb = color.match(/\d+/g);
-                return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
-            }
-            if (color.startsWith('rgba(')) {
-                return color;
-            }
-            return `rgba(0, 0, 0, ${alpha})`;
-        };
-        
-        // 获取所有区间颜色
-        const colors = {
-            recovery: getComputedColor('--recovery-color'),
-            endurance: getComputedColor('--endurance-color'),
-            tempo: getComputedColor('--tempo-color'),
-            threshold: getComputedColor('--threshold-color'),
-            vo2max: getComputedColor('--vo2max-color'),
-            anaerobic: getComputedColor('--anaerobic-color'),
-            neuromuscular: getComputedColor('--neuromuscular-color')
-        };
-        
         const existingPopup = document.querySelector('.info-popup');
         if (existingPopup) {
             return
@@ -445,159 +404,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const pmaxValue = window.calculatedData.pmax;
 
-        // 获取训练区间数据
-        const zones = window.calculatedData.training_zones;
-        
-        // 为每个区间创建数据集
-        // 恢复区间 (0-60% CP)
-        const recoveryZoneData = [
-            { x: 1, y: 0 },  // 从坐标轴底部开始
-            { x: 1, y: zones.recovery_zone.max },
-            { x: 3600, y: zones.recovery_zone.max },
-            { x: 3600, y: 0 }  // 回到坐标轴底部
-        ];
-        
-        // 耐力区间 (60-90% CP)
-        const enduranceZoneData = [
-            { x: 1, y: zones.recovery_zone.max },
-            { x: 1, y: zones.endurance_zone.max },
-            { x: 3600, y: zones.endurance_zone.max },
-            { x: 3600, y: zones.recovery_zone.max }
-        ];
-        
-        // 节奏区间 (90-95% CP)
-        const tempoZoneData = [
-            { x: 1, y: zones.endurance_zone.max },
-            { x: 1, y: zones.tempo_zone.max },
-            { x: 3600, y: zones.tempo_zone.max },
-            { x: 3600, y: zones.endurance_zone.max }
-        ];
-        
-        // 阈值区间 (95-105% CP)
-        const thresholdZoneData = [
-            { x: 1, y: zones.tempo_zone.max },
-            { x: 1, y: zones.threshold_zone.max },
-            { x: 3600, y: zones.threshold_zone.max },
-            { x: 3600, y: zones.tempo_zone.max }
-        ];
-        
-        // VO2Max区间 (105-130% CP)
-        const vo2maxZoneData = [
-            { x: 1, y: zones.threshold_zone.max },
-            { x: 1, y: zones.vo2max_zone.max },
-            { x: 3600, y: zones.vo2max_zone.max },
-            { x: 3600, y: zones.threshold_zone.max }
-        ];
-        
-        // 无氧区间 (130% CP - 80% Pmax)
-        const anaerobicZoneData = [
-            { x: 1, y: zones.vo2max_zone.max },
-            { x: 1, y: zones.anaerobic_zone.max },
-            { x: 3600, y: zones.anaerobic_zone.max },
-            { x: 3600, y: zones.vo2max_zone.max }
-        ];
-        
-        // 神经肌肉区间 (80-100% Pmax)
-        const neuromuscularZoneData = [
-            { x: 1, y: zones.anaerobic_zone.max },
-            { x: 1, y: zones.neuromuscular_zone.max },
-            { x: 3600, y: zones.neuromuscular_zone.max },
-            { x: 3600, y: zones.anaerobic_zone.max }
-        ];
-
-        // 使用获取的颜色创建数据集
         new Chart(ctx, {
             type: 'scatter',
             data: {
                 datasets: [
-                    // region 区间数据集
                     {
-                        label: '恢复区间',
-                        data: recoveryZoneData,
-                        backgroundColor: colors.recovery,
-                        borderWidth: 0,
-                        pointRadius: 0,
-                        showLine: true,
-                        fill: true,
-                        tension: 0,
-                        hoverEnabled: false,
-                        meta: { skipTooltip: true }
-                    },
-                    {
-                        label: '耐力区间',
-                        data: enduranceZoneData,
-                        backgroundColor: colors.endurance,
-                        borderWidth: 0,
-                        pointRadius: 0,
-                        showLine: true,
-                        fill: true,
-                        tension: 0,
-                        hoverEnabled: false,
-                        meta: { skipTooltip: true }
-                    },
-                    {
-                        label: '节奏区间',
-                        data: tempoZoneData,
-                        backgroundColor: colors.tempo,
-                        borderWidth: 0,
-                        pointRadius: 0,
-                        showLine: true,
-                        fill: true,
-                        tension: 0,
-                        hoverEnabled: false,
-                        meta: { skipTooltip: true }
-                    },
-                    {
-                        label: '阈值区间',
-                        data: thresholdZoneData,
-                        backgroundColor: colors.threshold,
-                        borderWidth: 0,
-                        pointRadius: 0,
-                        showLine: true,
-                        fill: true,
-                        tension: 0,
-                        hoverEnabled: false,
-                        meta: { skipTooltip: true }
-                    },
-                    {
-                        label: 'VO2Max区间',
-                        data: vo2maxZoneData,
-                        backgroundColor: colors.vo2max,
-                        borderWidth: 0,
-                        pointRadius: 0,
-                        showLine: true,
-                        fill: true,
-                        tension: 0,
-                        hoverEnabled: false,
-                        meta: { skipTooltip: true }
-                    },
-                    {
-                        label: '无氧区间',
-                        data: anaerobicZoneData,
-                        backgroundColor: colors.anaerobic,
-                        borderWidth: 0,
-                        pointRadius: 0,
-                        showLine: true,
-                        fill: true,
-                        tension: 0,
-                        hoverEnabled: false,
-                        meta: { skipTooltip: true }
-                    },
-                    {
-                        label: '神经肌肉区间',
-                        data: neuromuscularZoneData,
-                        backgroundColor: colors.neuromuscular,
-                        borderWidth: 0,
-                        pointRadius: 0,
-                        showLine: true,
-                        fill: true,
-                        tension: 0,
-                        hoverEnabled: false,
-                        meta: { skipTooltip: true }
-                    },
-                    // region 拟合曲线+原始数据点+CP线
-                    {
-                        label: '拟合功率曲线',
+                        label: '拟合功率',
                         data: chartData,
                         borderColor: 'rgba(52, 152, 219, 1)',
                         backgroundColor: 'rgba(52, 152, 219, 0.5)',
@@ -609,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         hiddenInLegend: true,
                     },
                     {
-                        label: '原始数据点',
+                        label: '原始数据',
                         data: originalPoints,
                         borderColor: 'rgba(231, 76, 60, 1)',
                         backgroundColor: 'rgba(231, 76, 60, 0.8)',
@@ -638,7 +450,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         hiddenInLegend: true,
                         meta: { skipTooltip: true }
                     }
-                    // endregion
                 ]
             },
             options: {
@@ -656,15 +467,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (context.dataset.meta && context.dataset.meta.skipTooltip) {
                                     return null;
                                 }
-
                                 const datasetLabel = context.dataset.label || '';
-                                return ` ${datasetLabel} - 时间: ${context.parsed.x.toFixed(1)}s,  功率: ${context.parsed.y.toFixed(1)}w`;
+                                return ` ${datasetLabel}: ${context.parsed.y.toFixed(1)}w`;
                             },
                             afterLabel: function(context) {
                                 const datasetLabel = context.dataset.label || '';
                                 let errorInfo = '';
                                 // 计算误差信息
-                                if (datasetLabel === '原始数据点') {
+                                if (datasetLabel === '原始数据') {
                                     const currentTime = context.parsed.x;
                                     const currentPower = context.parsed.y;
                                     
@@ -676,10 +486,16 @@ document.addEventListener('DOMContentLoaded', function() {
                                         const fittedPower = matchingPoint.y;
                                         const absoluteError = Math.abs(fittedPower - currentPower);
                                         const relativeError = (absoluteError / currentPower) * 100;
-                                        errorInfo = `预测误差: 绝对误差 ${absoluteError.toFixed(1)}w, 相对误差 ${relativeError.toFixed(1)}%`;
+                                        errorInfo = `绝对误差 ${absoluteError.toFixed(1)}w, 相对误差 ${relativeError.toFixed(1)}%`;
                                     }
                                 }
                                 return errorInfo;
+                            },
+                            beforeLabel: function(context) {
+                                const datasetLabel = context.dataset.label || '';
+                                if (datasetLabel === '拟合功率') {
+                                    return `时间: ${context.parsed.x.toFixed(1)}s`;
+                                }
                             }
                         },
                         usePointStyle: true,
