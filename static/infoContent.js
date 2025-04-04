@@ -72,6 +72,7 @@ function getInfoContent(infoType) {
             body: `
                 <h4>定义：</h4>
                 <p>理论上骑行者在瞬间(t→0)能够产生的最大功率输出。</p>
+                <p>$$P_{max} = CP + \\frac{W'}{\\tau}$$</p>
                 
                 <h4>生理意义：</h4>
                 <ul>

@@ -2,7 +2,7 @@
 
 ## 模型介绍
 
-### A 3-parameter critical power model
+### MORTON 3-parameter critical power model
 
 - **临界功率 (CP)**：代表运动员可以持续长时间的功率输出极限。
 - **无氧储备 (Anaerobic Reserve, W')**：在高于 CP 时，运动员能额外输出的能量储备（焦耳）。
