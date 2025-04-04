@@ -8,21 +8,39 @@ document.addEventListener('DOMContentLoaded', function() {
     const useExampleDataBtn = document.getElementById('useExampleData');
     const calculateBtn = document.getElementById('calculate');
 
-    // 初始添加3个空白数据点行
-    addPointRow();
-    addPointRow();
-    addPointRow();
+    // 从本地存储加载数据
+    loadFromLocalStorage();
+
+    // 初始添加3个空白数据点行（如果没有从本地存储恢复数据）
+    if (pointsContainer.children.length === 0) {
+        addPointRow();
+        addPointRow();
+        addPointRow();
+    }
 
     // 添加数据点行
-    addPointBtn.addEventListener('click', addPointRow);
+    addPointBtn.addEventListener('click', function() {
+        addPointRow();
+        saveToLocalStorage();
+    });
 
     // 删除数据点行的处理逻辑
     pointsContainer.addEventListener('click', function(e) {
         if (e.target.classList.contains('remove-btn') && !e.target.classList.contains('disabled')) {
             e.target.closest('.point-row').remove();
             updateRemoveButtons();
+            saveToLocalStorage();
         }
     });
+
+    // 监听输入变化以保存表单数据
+    pointsContainer.addEventListener('input', function() {
+        saveToLocalStorage();
+    });
+
+    // 监听体重和运行次数变化
+    document.getElementById('weight').addEventListener('input', saveToLocalStorage);
+    document.getElementById('runtimes').addEventListener('input', saveToLocalStorage);
 
     // 使用示例数据
     useExampleDataBtn.addEventListener('click', function() {
@@ -53,6 +71,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 更新删除按钮状态
         updateRemoveButtons();
+        
+        // 保存到本地存储
+        saveToLocalStorage();
     });
 
     // 表单提交
@@ -153,6 +174,8 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             displayResults(data);
+            // 保存结果到本地存储
+            saveResultsToLocalStorage(data);
         })
         .catch(error => {
             resultsContent.innerHTML = `
@@ -178,6 +201,9 @@ document.addEventListener('DOMContentLoaded', function() {
         addPointRow();
         addPointRow();
         addPointRow();
+        
+        // 清除本地存储
+        clearLocalStorage();
     });
 
     // 创建数据点行
@@ -243,6 +269,86 @@ document.addEventListener('DOMContentLoaded', function() {
                 warning.remove();
             }
         }
+    }
+
+    // 保存表单数据到本地存储
+    function saveToLocalStorage() {
+        const formData = {
+            points: [],
+            weight: document.getElementById('weight').value,
+            runtimes: document.getElementById('runtimes').value
+        };
+        
+        // 收集所有数据点
+        const pointRows = document.querySelectorAll('.point-row');
+        pointRows.forEach(row => {
+            const timeInput = row.querySelector('.time-input').value;
+            const powerInput = row.querySelector('.power-input').value;
+            formData.points.push({
+                time: timeInput,
+                power: powerInput
+            });
+        });
+        
+        localStorage.setItem('powerFormData', JSON.stringify(formData));
+    }
+    
+    // 保存计算结果到本地存储
+    function saveResultsToLocalStorage(data) {
+        localStorage.setItem('powerResults', JSON.stringify(data));
+    }
+    
+    // 从本地存储加载数据
+    function loadFromLocalStorage() {
+        try {
+            // 加载表单数据
+            const formDataJson = localStorage.getItem('powerFormData');
+            if (formDataJson) {
+                const formData = JSON.parse(formDataJson);
+                
+                // 设置体重和运行次数
+                if (formData.weight) document.getElementById('weight').value = formData.weight;
+                if (formData.runtimes) document.getElementById('runtimes').value = formData.runtimes;
+                
+                // 添加数据点行
+                if (formData.points && formData.points.length > 0) {
+                    // 清空容器
+                    pointsContainer.innerHTML = '';
+                    
+                    // 添加保存的数据点
+                    formData.points.forEach(point => {
+                        const row = createPointRow();
+                        const timeInput = row.querySelector('.time-input');
+                        const powerInput = row.querySelector('.power-input');
+                        
+                        if (point.time) timeInput.value = point.time;
+                        if (point.power) powerInput.value = point.power;
+                        
+                        pointsContainer.appendChild(row);
+                    });
+                    
+                    // 更新删除按钮状态
+                    updateRemoveButtons();
+                }
+            }
+            
+            // 加载计算结果
+            const resultsJson = localStorage.getItem('powerResults');
+            if (resultsJson) {
+                const results = JSON.parse(resultsJson);
+                displayResults(results);
+            }
+        } catch (error) {
+            console.error('从本地存储加载数据时出错:', error);
+            // 出错时清除本地存储，防止持续错误
+            clearLocalStorage();
+        }
+    }
+    
+    // 清除本地存储
+    function clearLocalStorage() {
+        localStorage.removeItem('powerFormData');
+        localStorage.removeItem('powerResults');
     }
 
     // 显示结果
