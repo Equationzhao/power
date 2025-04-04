@@ -543,7 +543,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         resultsHTML += `
         <div class="result-group">
-            <button id="showPowerTimeCurve" class="primary-btn">查看功率曲线</button>
+            <button id="showPowerTimeCurve" class="btn btn-primary">查看功率曲线</button>
         </div>`;
         
         resultsContent.innerHTML = resultsHTML;

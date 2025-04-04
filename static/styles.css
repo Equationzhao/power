@@ -4,18 +4,42 @@
     --secondary-color: #e74c3c;
     --accent-color: #2ecc71;
     --text-color: #333;
+    --text-secondary: #666;
+    --text-light: #999;
     --light-bg: #f5f7fa;
     --border-color: #ddd;
     --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --shadow-focus: 0 0 0 3px rgba(52, 152, 219, 0.25);
+    --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
     
-    /* 训练区间颜色 */
-    --recovery-color: #50ff73;
-    --endurance-color: #aed7f19e;
-    --tempo-color: #859ce9;
-    --threshold-color: #4f0aef;
-    --vo2max-color: #5c09bc;
-    --anaerobic-color: #b1154b;
-    --neuromuscular-color: #b306b0;
+    /* 训练区间颜色 - 从低强度到高强度渐变 */
+    --recovery-color: #6edea2;      /* 浅绿色 - 最低强度 */
+    --endurance-color: #66c2ff;     /* 浅蓝色 */
+    --tempo-color: #4f95ff;         /* 中蓝色 */
+    --threshold-color: #415dce;     /* 深蓝色 */
+    --vo2max-color: #6834b0;        /* 紫色 */
+    --anaerobic-color: #a62d8c;     /* 洋红色 */
+    --neuromuscular-color: #d61f57; /* 红色 - 最高强度 */
+    
+    /* 字体层级 */
+    --font-size-xxl: 28px;    /* 主标题 */
+    --font-size-xl: 22px;     /* 副标题 */
+    --font-size-l: 18px;      /* 区域标题 */
+    --font-size-m: 16px;      /* 主要内容 */
+    --font-size-s: 14px;      /* 次要内容 */
+    --font-size-xs: 12px;     /* 提示文本 */
+    
+    /* 通用间距 */
+    --spacing-xs: 4px;
+    --spacing-s: 8px;
+    --spacing-m: 16px;
+    --spacing-l: 24px;
+    --spacing-xl: 32px;
+    
+    /* 圆角 */
+    --radius-s: 4px;
+    --radius-m: 6px;
+    --radius-l: 8px;
 }
 
 * {
@@ -30,13 +54,14 @@ body {
     color: var(--text-color);
     background-color: var(--light-bg);
     padding: 20px;
+    font-size: var(--font-size-m);
 }
 
 .container {
     max-width: 1000px;
     margin: 0 auto;
     background: white;
-    border-radius: 8px;
+    border-radius: var(--radius-l);
     box-shadow: var(--shadow);
     overflow: hidden;
 }
@@ -44,24 +69,26 @@ body {
 header {
     background: var(--primary-color);
     color: white;
-    padding: 20px;
+    padding: var(--spacing-l);
     text-align: center;
 }
 
 header h1 {
-    margin-bottom: 8px;
+    margin-bottom: var(--spacing-s);
+    font-size: var(--font-size-xxl);
+    font-weight: 600;
 }
 
 main {
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: var(--spacing-l);
 }
 
 @media (min-width: 768px) {
     main {
         flex-direction: row;
-        gap: 20px;
+        gap: var(--spacing-l);
     }
     
     .form-container {
@@ -74,25 +101,42 @@ main {
 }
 
 .form-container {
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-l);
+    display: flex;
+    flex-direction: column;
 }
 
 .form-group {
-    margin-bottom: 15px;
+    margin-bottom: var(--spacing-m);
 }
 
 label {
     display: inline-block;
-    margin-bottom: 5px;
+    margin-bottom: var(--spacing-xs);
     font-weight: 500;
+    font-size: var(--font-size-s);
+    color: var(--text-color);
 }
 
 input[type="number"] {
     width: 100%;
-    padding: 10px;
+    padding: 10px 12px;
     border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 14px;
+    border-radius: var(--radius-s);
+    font-size: var(--font-size-m);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: #fff;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-focus);
+}
+
+input[type="number"]:hover:not(:focus) {
+    border-color: #bbb;
 }
 
 input[type="number"]::-webkit-outer-spin-button,
@@ -103,21 +147,24 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .hint {
     display: block;
-    font-size: 12px;
-    color: #666;
-    margin-top: 4px;
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    margin-top: var(--spacing-xs);
 }
 
 .power-points {
-    margin: 20px 0;
-    padding: 15px;
+    margin: var(--spacing-l) 0;
+    padding: var(--spacing-m);
     background: var(--light-bg);
-    border-radius: 6px;
+    border-radius: var(--radius-m);
+    border: 1px solid var(--border-color);
 }
 
 .power-points h3 {
-    margin-bottom: 15px;
+    margin-bottom: var(--spacing-m);
     color: var(--primary-dark);
+    font-size: var(--font-size-l);
+    font-weight: 600;
 }
 
 .points-container {
@@ -126,164 +173,256 @@ input[type="number"]::-webkit-inner-spin-button {
     max-height: 400px; /* 最大高度略微增加 */
     overflow-y: auto;
     border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 10px;
-    margin-bottom: 10px;
+    border-radius: var(--radius-s);
+    padding: var(--spacing-s);
+    margin-bottom: var(--spacing-s);
     background-color: white;
 }
 
 .point-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
+    gap: var(--spacing-s);
+    margin-bottom: var(--spacing-s);
+    padding: var(--spacing-s);
     border-bottom: 1px solid var(--border-color);
+    border-radius: var(--radius-s);
+    background-color: white;
+    transition: background-color 0.2s ease;
 }
 
-.point-row label {
-    min-width: 80px;
+.point-row:hover {
+    background-color: #f0f7ff;
 }
 
 .point-row input {
     flex: 1;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-s);
+    padding: 8px 10px;
+    transition: all 0.2s ease;
+}
+
+.point-row input:focus {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-focus);
+}
+
+.time-input, .power-input {
+    max-width: 120px;
 }
 
 .remove-btn {
+    background-color: #f8f9fa;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: var(--font-size-s);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    padding: 0;
+}
+
+.remove-btn:hover:not(.disabled) {
+    background-color: var(--secondary-color);
+    color: white;
+    border-color: var(--secondary-color);
+}
+
+.remove-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #f1f1f1;
+}
+
+.remove-btn .tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-s);
+    border-radius: var(--radius-s);
+    font-size: var(--font-size-xs);
+    white-space: nowrap;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: var(--spacing-xs);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s, visibility 0.2s;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.remove-btn.disabled:hover .tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 统一按钮样式 */
+.btn {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    border-radius: var(--radius-s);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: var(--spacing-s) var(--spacing-m);
+    text-align: center;
+}
+
+.btn:hover {
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-1px);
+}
+
+.btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 主要按钮 */
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+    padding: var(--spacing-m) var(--spacing-l);
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn-primary:disabled {
+    background: #a0cfee;
+}
+
+/* 次要按钮 */
+.btn-secondary {
+    background: #f8f9fa;
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: var(--spacing-m) var(--spacing-l);
+}
+
+.btn-secondary:hover {
+    background: #e9ecef;
+}
+
+/* 成功按钮 */
+.btn-success {
+    background: var(--accent-color);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #27ae60;
+}
+
+/* 危险按钮 */
+.btn-danger {
     background: var(--secondary-color);
     color: white;
-    border: none;
-    border-radius: 4px;
+}
+
+.btn-danger:hover {
+    background: #c0392b;
+}
+
+/* 小型按钮 */
+.btn-small {
+    padding: var(--spacing-xs) var(--spacing-s);
+    font-size: var(--font-size-s);
+}
+
+/* 图标按钮 */
+.btn-icon {
     width: 30px;
     height: 30px;
-    cursor: pointer;
-    font-size: 16px;
+    padding: 0;
+    font-size: var(--font-size-m);
     display: flex;
     align-items: center;
     justify-content: center;
     min-width: 30px;
-    transition: opacity 0.2s ease;
-    position: relative; /* 添加相对定位，为tooltip做准备 */
 }
 
-.remove-btn.disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-
-/* 自定义tooltip样式 */
-.tooltip {
-    position: absolute;
-    top: -40px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.8);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: nowrap;
-    visibility: hidden;
-    opacity: 0;
-    transition: opacity 0.3s, visibility 0.3s;
-    z-index: 10;
-    pointer-events: none;
-}
-
-.tooltip::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    margin-left: -5px;
-    border-width: 5px;
-    border-style: solid;
-    border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
-}
-
-.remove-btn.disabled:hover .tooltip {
-    visibility: visible;
-    opacity: 1;
-}
-
-.remove-btn.hidden {
-    visibility: hidden;
-    pointer-events: none;
-}
-
+/* 替换之前的按钮样式 */
 .add-btn {
     background: var(--accent-color);
     color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 8px 15px;
-    cursor: pointer;
-    font-weight: 500;
-    margin-top: 10px;
-}
-
-.form-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
+    margin-top: var(--spacing-s);
 }
 
 .primary-btn {
     background: var(--primary-color);
     color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 10px 20px;
-    cursor: pointer;
-    font-weight: 500;
+    padding: var(--spacing-m) var(--spacing-l);
     flex: 2;
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
-}
-
-.primary-btn:disabled {
-    background-color: #a0cfee;
-    cursor: wait;
-    opacity: 0.8;
 }
 
 .secondary-btn {
     background: #f1f1f1;
     color: var(--text-color);
     border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 10px 20px;
-    cursor: pointer;
-    font-weight: 500;
+    padding: var(--spacing-m) var(--spacing-l);
     flex: 1;
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
 }
 
 .example-btn {
     background: #7f8c8d;
     color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 8px 15px;
-    cursor: pointer;
-    font-size: 14px;
-    margin-bottom: 8px;
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+    padding: var(--spacing-s) var(--spacing-m);
+    font-size: var(--font-size-s);
+    margin-bottom: var(--spacing-xs);
+}
+
+.form-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-m);
+    margin-top: var(--spacing-xl);
+    width: 100%;
+}
+
+.action-btn {
+    width: 100%;
+    padding: var(--spacing-m) var(--spacing-l);
+    font-size: var(--font-size-l);
+    font-weight: 600;
+    text-align: center;
 }
 
 .results-container {
     background: white;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: var(--radius-l);
+    padding: var(--spacing-l);
     box-shadow: var(--shadow);
 }
 
 .results-container h2 {
-    margin-bottom: 15px;
+    margin-bottom: var(--spacing-m);
     color: var(--primary-color);
     border-bottom: 2px solid var(--primary-color);
-    padding-bottom: 10px;
+    padding-bottom: var(--spacing-s);
+    font-size: var(--font-size-xl);
 }
 
 .results-content {
@@ -291,14 +430,14 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 .placeholder {
-    color: #999;
+    color: var(--text-light);
     text-align: center;
     font-style: italic;
 }
 
 .result-group {
-    margin-bottom: 15px;
-    padding-bottom: 15px;
+    margin-bottom: var(--spacing-m);
+    padding-bottom: var(--spacing-m);
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -309,12 +448,12 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .value {
     font-weight: 600;
-    margin-left: 5px;
+    margin-left: var(--spacing-xs);
 }
 
 .unit {
-    color: #666;
-    margin-left: 5px;
+    color: var(--text-secondary);
+    margin-left: var(--spacing-xs);
 }
 
 .loading-overlay {
@@ -324,7 +463,7 @@ input[type="number"]::-webkit-inner-spin-button {
 .calculating {
     color: var(--primary-color);
     text-align: center;
-    padding: 20px;
+    padding: var(--spacing-l);
     animation: pulse 1.5s infinite;
 }
 
@@ -336,28 +475,28 @@ input[type="number"]::-webkit-inner-spin-button {
 
 footer {
     text-align: center;
-    margin-top: 30px;
-    color: #666;
-    font-size: 14px;
+    margin-top: var(--spacing-xl);
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
 }
 
 /* 训练区间相关样式 */
 .zones-title {
-    margin: 15px 0 10px;
+    margin: var(--spacing-m) 0 var(--spacing-s);
     color: var(--primary-dark);
-    font-size: 18px;
+    font-size: var(--font-size-l);
 }
 
 .zones-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
-    font-size: 14px;
+    margin-bottom: var(--spacing-l);
+    font-size: var(--font-size-s);
 }
 
 .zones-table th, 
 .zones-table td {
-    padding: 8px 12px;
+    padding: var(--spacing-s) var(--spacing-m);
     text-align: left;
     border: 1px solid var(--border-color);
 }
@@ -374,8 +513,8 @@ footer {
 .zones-visualization {
     display: flex;
     height: 40px;
-    margin: 15px 0;
-    border-radius: 4px;
+    margin: var(--spacing-m) 0;
+    border-radius: var(--radius-s);
     overflow: hidden;
 }
 
@@ -386,7 +525,7 @@ footer {
     justify-content: center;
     align-items: center;
     color: #fff;
-    font-size: 12px;
+    font-size: var(--font-size-xs);
     font-weight: bold;
     text-shadow: 0 0 2px rgba(0,0,0,0.5);
     transition: all 0.3s;
@@ -396,8 +535,8 @@ footer {
     transform: scaleY(1.1);
 }
 
-.recovery-zone { background-color: var(--recovery-color); color: #333; }
-.endurance-zone { background-color: var(--endurance-color); color: #333; }
+.recovery-zone { background-color: var(--recovery-color); color: var(--text-color); }
+.endurance-zone { background-color: var(--endurance-color); color: var(--text-color); }
 .tempo-zone { background-color: var(--tempo-color); }
 .threshold-zone { background-color: var(--threshold-color); }
 .vo2max-zone { background-color: var(--vo2max-color); }
@@ -408,25 +547,25 @@ footer {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-size: 10px;
-    padding: 0 4px;
+    font-size: var(--font-size-xs);
+    padding: 0 var(--spacing-xs);
 }
 
 .zone-text {
     font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 3px;
+    padding: var(--spacing-xs) var(--spacing-s);
+    border-radius: var(--radius-s);
     white-space: nowrap;
 }
 
 .recovery-text { 
     background-color: var(--recovery-color); 
-    color: #333;
+    color: var(--text-color);
 }
 
 .endurance-text { 
     background-color: var(--endurance-color); 
-    color: #333;
+    color: var(--text-color);
 }
 
 .tempo-text { 
@@ -475,7 +614,7 @@ footer {
     max-width: 600px;
     max-height: 80vh;
     background: white;
-    border-radius: 8px;
+    border-radius: var(--radius-l);
     box-shadow: 0 5px 30px rgba(0, 0, 0, 0.2);
     z-index: 1000;
     overflow: hidden;
@@ -492,21 +631,21 @@ footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
+    padding: var(--spacing-m) var(--spacing-l);
     background: var(--primary-color);
     color: white;
 }
 
 .info-popup-header h3 {
     margin: 0;
-    font-size: 18px;
+    font-size: var(--font-size-xl);
 }
 
 .info-popup-close {
     background: none;
     border: none;
     color: white;
-    font-size: 24px;
+    font-size: var(--font-size-xxl);
     cursor: pointer;
     padding: 0;
     width: 30px;
@@ -523,39 +662,39 @@ footer {
 }
 
 .info-popup-content {
-    padding: 20px;
+    padding: var(--spacing-l);
     overflow-y: auto;
     max-height: calc(80vh - 60px);
 }
 
 .info-popup-content h4 {
     color: var(--primary-dark);
-    margin: 15px 0 8px 0;
+    margin: var(--spacing-m) 0 var(--spacing-xs) 0;
 }
 
 .info-popup-content p {
-    margin: 0 0 10px 0;
+    margin: 0 0 var(--spacing-s) 0;
     line-height: 1.5;
 }
 
 .info-popup-content ul {
-    margin: 8px 0;
-    padding-left: 20px;
+    margin: var(--spacing-xs) 0;
+    padding-left: var(--spacing-l);
 }
 
 .info-popup-content li {
-    margin-bottom: 5px;
+    margin-bottom: var(--spacing-xs);
 }
 
 /* 响应式调整 */
 @media (max-width: 767px) {
     .zones-table {
-        font-size: 12px;
+        font-size: var(--font-size-xs);
     }
     
     .zones-table th, 
     .zones-table td {
-        padding: 6px 8px;
+        padding: var(--spacing-xs) var(--spacing-s);
     }
     
     .zone-label {
@@ -573,7 +712,15 @@ footer {
     
     .info-popup-content {
         max-height: calc(90vh - 60px);
-        padding: 15px;
+        padding: var(--spacing-m);
+    }
+    
+    .data-actions {
+        flex-direction: column;
+    }
+    
+    .data-btn {
+        width: 100%;
     }
 }
 
@@ -584,7 +731,7 @@ footer {
 }
 
 .chart-content {
-    padding: 10px;
+    padding: var(--spacing-s);
     height: calc(90vh - 60px);
 }
 
@@ -596,4 +743,24 @@ footer {
     .chart-popup {
         width: 95%;
     }
+}
+
+/* 数据点操作按钮区域 */
+.data-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--spacing-m);
+    margin-top: var(--spacing-m);
+}
+
+.data-btn {
+    flex: 1;
+    text-align: center;
+    padding: var(--spacing-m) var(--spacing-l);
+    font-weight: 500;
+}
+
+/* 覆盖原有按钮样式，确保一致性 */
+#addPoint, #useExampleData {
+    margin-top: 0;
 }
