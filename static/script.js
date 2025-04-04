@@ -251,19 +251,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // 基本参数结果
         let resultsHTML = `
             <div class="result-group">
-                <div><span class="result-label info-trigger" data-info="cp">临界功率 (CP):</span> <span class="value info-trigger" data-info="cp">${data.cp.toFixed(1)}</span> <span class="unit">瓦特</span></div>
-                ${hasWeight ? `<div><span class="result-label info-trigger" data-info="cp_per_kg">功体比 (PWR):</span> <span class="value info-trigger" data-info="cp_per_kg">${(data.cp/weight).toFixed(2)}</span> <span class="unit">W/kg</span></div>` : ''}
-                <div><span class="result-label info-trigger" data-info="wprime">无氧储备 (Anaerobic Reserve, W'):</span> <span class="value info-trigger" data-info="wprime">${data.wprime.toFixed(0)}</span> <span class="unit">焦耳</span></div>
-                <div><span class="result-label info-trigger" data-info="pmax">最大瞬时功率 (Pmax):</span> <span class="value info-trigger" data-info="pmax">${data.pmax.toFixed(1)}</span> <span class="unit">瓦特</span></div>
-                <div><span class="result-label info-trigger" data-info="tau">时间常数 (Tau):</span> <span class="value info-trigger" data-info="tau">${data.tau.toFixed(2)}</span> <span class="unit">秒</span></div>
-                <div><span class="result-label info-trigger" data-info="rmse">拟合误差 (RMSE):</span> <span class="value info-trigger" data-info="rmse">${data.rmse.toFixed(2)}</span></div>
+                <div><span class="result-label info-trigger" data-info="cp">临界功率 (CP):</span> <span class="value " data-info="cp">${data.cp.toFixed(1)}</span> <span class="unit">瓦</span></div>
+                ${hasWeight ? `<div><span class="result-label info-trigger" data-info="cp_per_kg">功体比 (PWR):</span> <span class="value " data-info="cp_per_kg">${(data.cp/weight).toFixed(2)}</span> <span class="unit">W/kg</span></div>` : ''}
+                <div><span class="result-label info-trigger" data-info="wprime">无氧储备 (Anaerobic Reserve, W'):</span> <span class="value " data-info="wprime">${data.wprime.toFixed(0)}</span> <span class="unit">焦</span></div>
+                <div><span class="result-label info-trigger" data-info="pmax">最大瞬时功率 (Pmax):</span> <span class="value " data-info="pmax">${data.pmax.toFixed(1)}</span> <span class="unit">瓦</span></div>
+                <div><span class="result-label info-trigger" data-info="tau">时间常数 (Tau):</span> <span class="value " data-info="tau">${data.tau.toFixed(2)}</span> <span class="unit">秒</span></div>
+                <div><span class="result-label info-trigger" data-info="rmse">拟合误差 (RMSE):</span> <span class="value " data-info="rmse">${data.rmse.toFixed(2)}</span></div>
             </div>`;
             
         // VO2Max 结果（如果有）
         if (data.vo2max) {
             resultsHTML += `
             <div class="result-group">
-                <div><span class="result-label info-trigger" data-info="vo2max">最大摄氧量 (VO2Max):</span> <span class="value info-trigger" data-info="vo2max">${data.vo2max.toFixed(1)}</span> <span class="unit">ml/kg/min</span></div>
+                <div><span class="result-label info-trigger" data-info="vo2max">最大摄氧量 (VO2Max):</span> <span class="value " data-info="vo2max">${data.vo2max.toFixed(1)}</span> <span class="unit">ml/kg/min</span></div>
             </div>`;
         }
         

@@ -119,7 +119,11 @@ func mainHandler(ctx *fasthttp.RequestCtx) {
 		calculateHandler(ctx)
 
 	case path == "/favicon.ico":
-		ctx.SetStatusCode(fasthttp.StatusNoContent)
+		staticFilePath := filepath.Join("static", "favicon.ico")
+		if fileExists(staticFilePath) {
+			fasthttp.ServeFile(ctx, staticFilePath)
+			return
+		}
 
 	default:
 		if fileExists(filepath.Join("static", path)) {

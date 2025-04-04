@@ -9,9 +9,9 @@
     --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     
     /* 训练区间颜色 */
-    --recovery-color: #2f99fb;
-    --endurance-color: #AED6F1;
-    --tempo-color: #85C1E9;
+    --recovery-color: #50ff73;
+    --endurance-color: #aed7f19e;
+    --tempo-color: #859ce9;
     --threshold-color: #4f0aef;
     --vo2max-color: #5c09bc;
     --anaerobic-color: #b1154b;
