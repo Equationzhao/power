@@ -151,10 +151,80 @@ document.addEventListener('DOMContentLoaded', function() {
         calculateBtn.innerHTML = '计算中...';
         calculateBtn.disabled = true;
         
-        // 只禁用提交按钮，而不是所有表单元素
-        // 这样可以避免表单元素的闪烁
+        // 检查是否已经有结果显示，如果有则添加蒙版而不是重置内容
+        const hasExistingResults = resultsContent.querySelector('.result-group') !== null;
         
-        resultsContent.innerHTML = '<p class="calculating">正在计算，请稍候...</p>';
+        if (hasExistingResults) {
+            // 创建蒙版和加载指示器
+            const overlay = document.createElement('div');
+            overlay.className = 'results-overlay';
+            overlay.innerHTML = `
+                <div class="loading-spinner"></div>
+                <div class="loading-text">计算中...</div>
+            `;
+            
+            // 添加蒙版样式
+            overlay.style.position = 'absolute';
+            overlay.style.top = '0';
+            overlay.style.left = '0';
+            overlay.style.width = '100%';
+            overlay.style.height = '100%';
+            overlay.style.backgroundColor = 'rgba(255, 255, 255, 0.69)';
+            overlay.style.display = 'flex';
+            overlay.style.flexDirection = 'column';
+            overlay.style.justifyContent = 'center';
+            overlay.style.alignItems = 'center';
+            overlay.style.zIndex = '10';
+            
+            // 添加加载转圈样式
+            const style = document.createElement('style');
+            if (!document.querySelector('style#loading-spinner-style')) {
+                style.id = 'loading-spinner-style';
+                style.textContent = `
+                    .loading-spinner {
+                        width: 50px;
+                        height: 50px;
+                        border: 5px solid rgba(0, 0, 0, 0.1);
+                        border-radius: 50%;
+                        border-top-color: var(--primary-color);
+                        animation: spin 1s ease-in-out infinite;
+                        margin-bottom: 15px;
+                    }
+                    
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+                    
+                    .loading-text {
+                        font-size: 18px;
+                        color: var(--text-color);
+                        font-weight: bold;
+                    }
+                    
+                    .results-overlay {
+                        opacity: 0;
+                        transition: opacity 0.3s ease;
+                    }
+                    
+                    .results-overlay.show {
+                        opacity: 1;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            // 设置结果容器为相对定位，以便蒙版可以正确定位
+            resultsContent.style.position = 'relative';
+            resultsContent.appendChild(overlay);
+            
+            // 淡入蒙版
+            setTimeout(() => {
+                overlay.classList.add('show');
+            }, 10);
+        } else {
+            // 如果没有已存在的结果，则显示计算中的提示
+            resultsContent.innerHTML = '<p class="calculating">正在计算，请稍候...</p>';
+        }
         
         // 发送到API
         fetch('/calculate', {
@@ -173,7 +243,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
+            // 移除蒙版（如果存在）
+            const overlay = resultsContent.querySelector('.results-overlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+                setTimeout(() => overlay.remove(), 300);
+            }
+            
+            // 显示结果
             displayResults(data);
+            
             // 保存结果到本地存储
             saveResultsToLocalStorage(data);
         })
@@ -431,7 +510,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         resultsHTML += `
         <div class="result-group">
-            <button id="showPowerTimeCurve" class="primary-btn">查看功率-时间曲线</button>
+            <button id="showPowerTimeCurve" class="primary-btn">查看功率曲线</button>
         </div>`;
         
         resultsContent.innerHTML = resultsHTML;
