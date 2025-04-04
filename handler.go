@@ -4,34 +4,11 @@ import (
 	"log/slog"
 	"path/filepath"
 
+	"slices"
+
 	"github.com/bytedance/sonic"
 	"github.com/valyala/fasthttp"
 )
-
-type CalculateResponse struct {
-	CP            float64       `json:"cp"`
-	Wprime        float64       `json:"wprime"`
-	Pmax          float64       `json:"pmax"`
-	Tau           float64       `json:"tau"`
-	RMSE          float64       `json:"rmse"`
-	VO2Max        float64       `json:"vo2max"`
-	TrainingZones TrainingZones `json:"training_zones"`
-}
-
-type zone struct {
-	Min float64 `json:"min"`
-	Max float64 `json:"max"`
-}
-
-type TrainingZones struct {
-	RecoveryZone      zone `json:"recovery_zone"`
-	EnduranceZone     zone `json:"endurance_zone"`
-	TempoZone         zone `json:"tempo_zone"`
-	ThresholdZone     zone `json:"threshold_zone"`
-	VO2MaxZone        zone `json:"vo2max_zone"`
-	AnaerobicZone     zone `json:"anaerobic_zone"`
-	NeuromuscularZone zone `json:"neuromuscular_zone"`
-}
 
 const (
 	badRequest          = `{"error": "Bad Request"}`
@@ -67,6 +44,36 @@ func calculateHandler(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	tzBO := model.GetTrainingZones()
+
+	// 计算功率-时间曲线
+	var powerTimeCurve []PowerTimePoint
+	timeMap := make(map[float64]struct{})
+	for t := 1.0; t <= 60*60; t *= 1.2 {
+		timeMap[t] = struct{}{}
+	}
+	// 插入固定的几个重要时间点
+	// 1s 5s 10s 15s 20s 30s 1min 以及 2-120 每分钟, 还有用户输入的时间点
+	fixedPoints := []float64{1, 5, 10, 15, 20, 30, 60}
+	for _, t := range fixedPoints {
+		timeMap[t] = struct{}{}
+	}
+	for m := 2; m <= 120; m++ {
+		timeMap[float64(m*60)] = struct{}{}
+	}
+	for _, t := range data.PT {
+		timeMap[t.Time] = struct{}{}
+	}
+	var times []float64
+	for t := range timeMap {
+		times = append(times, t)
+	}
+	slices.Sort(times)
+	for _, t := range times {
+		powerTimeCurve = append(powerTimeCurve, PowerTimePoint{
+			Time:  t,
+			Power: model.PredictPower(t),
+		})
+	}
 	resp := CalculateResponse{
 		CP:     model.CP,
 		Wprime: model.Wprime,
@@ -82,6 +89,7 @@ func calculateHandler(ctx *fasthttp.RequestCtx) {
 			AnaerobicZone:     zone{Min: tzBO.AnaerobicZone.Min, Max: tzBO.AnaerobicZone.Max},
 			NeuromuscularZone: zone{Min: tzBO.NeuromuscularZone.Min, Max: tzBO.NeuromuscularZone.Max},
 		},
+		PowerTimeCurve: powerTimeCurve,
 	}
 	if data.Weight > 0 {
 		resp.VO2Max = model.PredictVO2Max(data.Weight)

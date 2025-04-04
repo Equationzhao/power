@@ -576,3 +576,24 @@ footer {
         padding: 15px;
     }
 }
+
+.chart-popup {
+    width: 90%;
+    max-width: 1200px;
+    max-height: 90vh;
+}
+
+.chart-content {
+    padding: 10px;
+    height: calc(90vh - 60px);
+}
+
+#powerTimeCurveChart {
+    height: 100% !important;
+}
+
+@media (max-width: 767px) {
+    .chart-popup {
+        width: 95%;
+    }
+}

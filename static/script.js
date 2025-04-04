@@ -25,14 +25,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // 使用示例数据
     useExampleDataBtn.addEventListener('click', function() {
         const exampleData = [
-            {Time: 1, Power: 768},
-            {Time: 5, Power: 697},
-            {Time: 10, Power: 683},
-            {Time: 30, Power: 482},
-            {Time: 60, Power: 337},
-            {Time: 300, Power: 259},
-            {Time: 600, Power: 236},
-            {Time: 1200, Power: 233}
+            {Time: 100, Power: 446},
+            {Time: 172, Power: 385},
+            {Time: 434, Power: 324},
+            {Time: 857, Power: 290},
+            {Time: 1361, Power: 280},
         ];
 
         // 清除现有行
@@ -49,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         // 设置默认运行次数和体重
-        document.getElementById('runtimes').value = 10000;
+        document.getElementById('runtimes').value = 100000;
         document.getElementById('weight').value = 70;
 
         // 更新删除按钮状态
@@ -79,8 +76,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 powerInput.style.borderColor = !power ? 'red' : '';
             } else {
                 points.push({
-                    Time: time,
-                    Power: power
+                    time: time,
+                    power: power
                 });
                 
                 // 重置边框颜色
@@ -248,11 +245,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 显示结果
     function displayResults(data) {
+        const weight = Number(document.getElementById('weight').value) || 0;
+        const hasWeight = weight > 0;
+        
         // 基本参数结果
         let resultsHTML = `
             <div class="result-group">
                 <div><span class="result-label info-trigger" data-info="cp">临界功率 (CP):</span> <span class="value info-trigger" data-info="cp">${data.cp.toFixed(1)}</span> <span class="unit">瓦特</span></div>
-                <div><span class="result-label info-trigger" data-info="wprime">无氧工作容量 (W'):</span> <span class="value info-trigger" data-info="wprime">${data.wprime.toFixed(0)}</span> <span class="unit">焦耳</span></div>
+                ${hasWeight ? `<div><span class="result-label info-trigger" data-info="cp_per_kg">功体比 (PWR):</span> <span class="value info-trigger" data-info="cp_per_kg">${(data.cp/weight).toFixed(2)}</span> <span class="unit">W/kg</span></div>` : ''}
+                <div><span class="result-label info-trigger" data-info="wprime">无氧储备 (Anaerobic Reserve, W'):</span> <span class="value info-trigger" data-info="wprime">${data.wprime.toFixed(0)}</span> <span class="unit">焦耳</span></div>
                 <div><span class="result-label info-trigger" data-info="pmax">最大瞬时功率 (Pmax):</span> <span class="value info-trigger" data-info="pmax">${data.pmax.toFixed(1)}</span> <span class="unit">瓦特</span></div>
                 <div><span class="result-label info-trigger" data-info="tau">时间常数 (Tau):</span> <span class="value info-trigger" data-info="tau">${data.tau.toFixed(2)}</span> <span class="unit">秒</span></div>
                 <div><span class="result-label info-trigger" data-info="rmse">拟合误差 (RMSE):</span> <span class="value info-trigger" data-info="rmse">${data.rmse.toFixed(2)}</span></div>
@@ -320,10 +321,278 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>`;
         }
         
+        resultsHTML += `
+        <div class="result-group">
+            <button id="showPowerTimeCurve" class="primary-btn">查看功率-时间曲线</button>
+        </div>`;
+        
         resultsContent.innerHTML = resultsHTML;
+        
+        window.calculatedData = data;
+        
+        document.getElementById('showPowerTimeCurve').addEventListener('click', function() {
+            showPowerTimeCurvePopup(data.power_time_curve);
+        });
         
         // 添加弹窗点击事件监听
         setupInfoPopups();
+    }
+
+    // 获取功率-时间曲线数据
+    function fetchPowerTimeCurve() {
+        fetch('/calculate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                pt: collectPowerTimePoints(),
+                runtimes: Number(document.getElementById('runtimes').value) || 10000,
+                weight: Number(document.getElementById('weight').value) || 0
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('获取功率-时间曲线数据失败');
+            }
+            return response.json();
+        })
+        .then(data => {
+            showPowerTimeCurvePopup(data.power_time_curve);
+        })
+        .catch(error => {
+            alert(error.message);
+        });
+    }
+
+    // 显示功率-时间曲线弹窗
+    function showPowerTimeCurvePopup(curveData) {
+        // 首先清除任何已存在的图表弹窗
+        const existingPopup = document.querySelector('.info-popup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+
+        // 创建弹窗容器
+        const popup = document.createElement('div');
+        popup.className = 'info-popup chart-popup'; // 添加chart-popup类用于特殊样式
+        popup.innerHTML = `
+            <div class="info-popup-header">
+                <h3>功率-时间曲线</h3>
+                <button class="info-popup-close">&times;</button>
+            </div>
+            <div class="info-popup-content chart-content">
+                <canvas id="powerTimeCurveChart"></canvas>
+            </div>
+        `;
+
+        document.body.appendChild(popup);
+
+        // 关闭弹窗事件
+        popup.querySelector('.info-popup-close').addEventListener('click', function() {
+            popup.remove();
+        });
+
+        // 点击外部关闭弹窗
+        setTimeout(() => {
+            document.addEventListener('click', function closeChartPopup(e) {
+                if (popup && !popup.contains(e.target) && !e.target.matches('#showPowerTimeCurve')) {
+                    popup.remove();
+                    document.removeEventListener('click', closeChartPopup);
+                }
+            });
+        }, 100);
+
+        // 渐入显示
+        setTimeout(() => {
+            popup.classList.add('show');
+        }, 10);
+
+        // 绘制图表 - 为X轴使用对数刻度以更好地显示曲线形状
+        const ctx = document.getElementById('powerTimeCurveChart').getContext('2d');
+        
+        // 转换曲线数据为适合图表显示的格式
+        const chartData = curveData.map(point => ({
+            x: point.time,
+            y: point.power
+        }));
+        
+        // 获取用户输入的原始数据点
+        const originalPoints = collectPowerTimePoints().map(point => ({
+            x: point.time,
+            y: point.power
+        }));
+
+        // 添加CP渐近线数据
+        // 使用window.calculatedData获取CP值
+        const cpValue = window.calculatedData.cp;
+        
+        // 创建CP渐近线的数据点 - 从x轴最小值到最大值
+        const cpLineData = [
+            { x: 1, y: cpValue },    // 从1秒开始(对数轴的最小值)
+            { x: 3600, y: cpValue }  // 到3600秒(1小时)结束
+        ];
+
+        // 创建图表
+        new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [
+                    {
+                        label: '拟合功率曲线',
+                        data: chartData,
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        backgroundColor: 'rgba(52, 152, 219, 0.5)',
+                        borderWidth: 2,
+                        showLine: true,
+                        tension: 0,
+                        pointRadius: 0,
+                        pointHoverRadius: 8
+                    },
+                    {
+                        label: '原始数据点',
+                        data: originalPoints,
+                        borderColor: 'rgba(231, 76, 60, 1)',
+                        backgroundColor: 'rgba(231, 76, 60, 0.8)',
+                        borderWidth: 1,
+                        showLine: false,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        pointStyle: 'star'
+                    },
+                    {
+                        label: '临界功率 (CP)',
+                        data: cpLineData,
+                        borderColor: 'rgba(82, 123, 195, 0.8)',
+                        backgroundColor: 'rgba(149, 107, 239, 0.3)',
+                        borderWidth: 2,
+                        borderDash: [6, 4],  // 虚线样式
+                        showLine: true,
+                        fill: false,
+                        pointRadius: 0,
+                        tension: 0,
+                        showInLegend: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'nearest',
+                    intersect: false,
+                    axis: 'x'
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const datasetLabel = context.dataset.label || '';
+                                return ` ${datasetLabel} - 时间: ${context.parsed.x.toFixed(1)}s,  功率: ${context.parsed.y.toFixed(1)}w`;
+                            }
+                        },
+                        usePointStyle: true,
+                        titleFont: {
+                            size: 16
+                        },
+                        bodyFont: {
+                            size: 16
+                        },
+                        padding: 12
+                    },
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                size: 14
+                            },
+                            usePointStyle: true,
+                            padding: 20,
+                            filter: (legendItem, chartData) => {
+                                const dataset = chartData.datasets[legendItem.datasetIndex];
+                                return dataset.showInLegend !== false;
+                            }
+                        },
+                        onClick: null,
+                        onHover: null
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'logarithmic',
+                        position: 'bottom',
+                        title: {
+                            display: true,
+                            text: '时间',
+                            font: {
+                                size: 18,
+                                weight: 'bold',
+                            },
+                            padding: {top: 15, bottom: 15}
+                        },
+                        max: 3600,
+                        ticks: {
+                            autoSkip: false,
+                            callback: function(value) {
+                                sec=[1,5,15];
+                                min=[60,300,600];
+                                hour=[3600];
+                                if (sec.includes(value)) {
+                                    return value + 's';
+                                }
+                                if (min.includes(value)) {
+                                    return value/60 + 'm';
+                                }
+                                if (hour.includes(value)) {
+                                    return value/3600 + 'h';
+                                }
+                                return '';
+                            },
+                            font: {
+                                size: 14
+                            },
+                            padding: 10
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                        text: '功率 (w)',
+                            font: {
+                                size: 18,
+                                weight: 'bold',
+                            },
+                            padding: {top: 5, bottom: 15}
+                        },
+                        beginAtZero: false,
+                        ticks: {
+                            font: {
+                                size: 14
+                            },
+                            padding: 10
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // 收集功率-时间数据点
+    function collectPowerTimePoints() {
+        const points = [];
+        const pointRows = document.querySelectorAll('.point-row');
+        pointRows.forEach(row => {
+            const timeInput = row.querySelector('.time-input').value;
+            const powerInput = row.querySelector('.power-input').value;
+            if (timeInput && powerInput) {
+                points.push({
+                    time: Number(timeInput),
+                    power: Number(powerInput)
+                });
+            }
+        });
+        return points;
     }
 
     // 设置信息弹窗触发器
@@ -399,19 +668,27 @@ document.addEventListener('DOMContentLoaded', function() {
                         <li>表示有氧代谢系统的最大稳定输出能力</li>
                         <li>在此强度下，乳酸产生和清除处于平衡状态</li>
                     </ul>
+                `
+            },
+            cp_per_kg: {
+                title: "功体比 (PWR)",
+                body: `
+                    <h4>定义：</h4>
+                    <p>临界功率(CP)与体重的比值，单位为瓦特/千克(W/kg)。</p>
+                    
+                    <h4>意义：</h4>
+                    <ul>
+                        <li>相对功率指标，能更好地比较不同体重运动员的能力</li>
+                        <li>在爬坡等对抗重力的情境下，是预测表现的关键指标</li>
+                        <li>比绝对功率更有效地反映耐力骑行能力</li>
+                    </ul>
                     
                     <h4>典型值：</h4>
                     <ul>
+                        <li>休闲骑行者: 1.5-2.9 W/kg</li>
                         <li>训练有素的业余骑行者: 3.0-3.7 W/kg</li>
                         <li>高水平业余骑行者: 3.8-4.4 W/kg</li>
                         <li>精英/职业骑行者: 4.5-6.5+ W/kg</li>
-                    </ul>
-                    
-                    <h4>应用：</h4>
-                    <ul>
-                        <li>确定持续训练和比赛强度</li>
-                        <li>预测不同时间段的表现能力</li>
-                        <li>比赛策略制定的基础</li>
                     </ul>
                 `
             },
@@ -485,13 +762,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <li>较小的τ表示功率衰减更快，较大的τ表示功率衰减更缓慢</li>
                     </ul>
                     
-                    <h4>典型值：</h4>
-                    <ul>
-                        <li>爆发力型选手: 5-8秒</li>
-                        <li>全能型选手: 8-12秒</li>
-                        <li>耐力型选手: 12-20秒</li>
-                    </ul>
-                    
                     <h4>应用：</h4>
                     <ul>
                         <li>运动员类型分类</li>
@@ -518,14 +788,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         <li>由心输出量(心率×每搏输出量)和动静脉氧差共同决定</li>
                         <li>受心血管系统、呼吸系统和肌肉代谢能力共同限制</li>
                         <li>40-50%由遗传因素决定，其余可通过训练改变</li>
-                    </ul>
-                    
-                    <h4>典型值：</h4>
-                    <ul>
-                        <li>休闲骑行者: 45-55 ml/kg/min</li>
-                        <li>训练有素的业余骑行者: 55-65 ml/kg/min</li>
-                        <li>精英骑行者: 65-75 ml/kg/min</li>
-                        <li>世界级职业选手: 75-85+ ml/kg/min</li>
                     </ul>
                     
                     <h4>应用：</h4>
