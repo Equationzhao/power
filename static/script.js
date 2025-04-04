@@ -93,10 +93,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const time = Number(timeInput.value);
             const power = Number(powerInput.value);
             
-            if (!time || !power) {
+            if (!time || time <= 0 || !power || power <= 0) {
                 isValid = false;
-                timeInput.style.borderColor = !time ? 'red' : '';
-                powerInput.style.borderColor = !power ? 'red' : '';
+                timeInput.style.borderColor = (!time || time <= 0) ? 'red' : '';
+                powerInput.style.borderColor = (!power || power <= 0) ? 'red' : '';
             } else {
                 points.push({
                     time: time,
@@ -212,9 +212,9 @@ document.addEventListener('DOMContentLoaded', function() {
         row.className = 'point-row';
         row.innerHTML = `
             <label>时间 (秒):</label>
-            <input type="number" class="time-input" min="1" step="1">
-            <label>功率 (瓦特):</label>
-            <input type="number" class="power-input" min="1" step="1">
+            <input type="number" class="time-input" min="0.1" step="any">
+            <label>功率 (瓦):</label>
+            <input type="number" class="power-input" min="0.1" step="any">
             <button type="button" class="remove-btn" title="移除此数据点">
                 ✕
                 <span class="tooltip">至少需要3个数据点</span>
