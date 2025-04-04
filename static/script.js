@@ -338,36 +338,49 @@ document.addEventListener('DOMContentLoaded', function() {
         setupInfoPopups();
     }
 
-    // 获取功率-时间曲线数据
-    function fetchPowerTimeCurve() {
-        fetch('/calculate', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                pt: collectPowerTimePoints(),
-                runtimes: Number(document.getElementById('runtimes').value) || 10000,
-                weight: Number(document.getElementById('weight').value) || 0
-            })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('获取功率-时间曲线数据失败');
-            }
-            return response.json();
-        })
-        .then(data => {
-            showPowerTimeCurvePopup(data.power_time_curve);
-        })
-        .catch(error => {
-            alert(error.message);
-        });
-    }
-
     // 显示功率-时间曲线弹窗
     function showPowerTimeCurvePopup(curveData) {
-        // 首先清除任何已存在的图表弹窗
+        const getComputedColor = (varName) => {
+            const computedStyle = getComputedStyle(document.documentElement);
+            const color = computedStyle.getPropertyValue(varName).trim();
+            return convertToRGBA(color, 0.1);
+        };
+        
+        const convertToRGBA = (color, alpha) => {
+            if (color.startsWith('#')) {
+                let r = 0, g = 0, b = 0;
+                if (color.length === 4) {
+                    r = parseInt(color[1] + color[1], 16);
+                    g = parseInt(color[2] + color[2], 16);
+                    b = parseInt(color[3] + color[3], 16);
+                } else if (color.length === 7) {
+                    r = parseInt(color.substr(1, 2), 16);
+                    g = parseInt(color.substr(3, 2), 16);
+                    b = parseInt(color.substr(5, 2), 16);
+                }
+                return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            }
+            if (color.startsWith('rgb(')) {
+                const rgb = color.match(/\d+/g);
+                return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+            }
+            if (color.startsWith('rgba(')) {
+                return color;
+            }
+            return `rgba(0, 0, 0, ${alpha})`;
+        };
+        
+        // 获取所有区间颜色
+        const colors = {
+            recovery: getComputedColor('--recovery-color'),
+            endurance: getComputedColor('--endurance-color'),
+            tempo: getComputedColor('--tempo-color'),
+            threshold: getComputedColor('--threshold-color'),
+            vo2max: getComputedColor('--vo2max-color'),
+            anaerobic: getComputedColor('--anaerobic-color'),
+            neuromuscular: getComputedColor('--neuromuscular-color')
+        };
+        
         const existingPopup = document.querySelector('.info-popup');
         if (existingPopup) {
             return
@@ -432,11 +445,157 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const pmaxValue = window.calculatedData.pmax;
 
-        // 创建图表
+        // 获取训练区间数据
+        const zones = window.calculatedData.training_zones;
+        
+        // 为每个区间创建数据集
+        // 恢复区间 (0-60% CP)
+        const recoveryZoneData = [
+            { x: 1, y: 0 },  // 从坐标轴底部开始
+            { x: 1, y: zones.recovery_zone.max },
+            { x: 3600, y: zones.recovery_zone.max },
+            { x: 3600, y: 0 }  // 回到坐标轴底部
+        ];
+        
+        // 耐力区间 (60-90% CP)
+        const enduranceZoneData = [
+            { x: 1, y: zones.recovery_zone.max },
+            { x: 1, y: zones.endurance_zone.max },
+            { x: 3600, y: zones.endurance_zone.max },
+            { x: 3600, y: zones.recovery_zone.max }
+        ];
+        
+        // 节奏区间 (90-95% CP)
+        const tempoZoneData = [
+            { x: 1, y: zones.endurance_zone.max },
+            { x: 1, y: zones.tempo_zone.max },
+            { x: 3600, y: zones.tempo_zone.max },
+            { x: 3600, y: zones.endurance_zone.max }
+        ];
+        
+        // 阈值区间 (95-105% CP)
+        const thresholdZoneData = [
+            { x: 1, y: zones.tempo_zone.max },
+            { x: 1, y: zones.threshold_zone.max },
+            { x: 3600, y: zones.threshold_zone.max },
+            { x: 3600, y: zones.tempo_zone.max }
+        ];
+        
+        // VO2Max区间 (105-130% CP)
+        const vo2maxZoneData = [
+            { x: 1, y: zones.threshold_zone.max },
+            { x: 1, y: zones.vo2max_zone.max },
+            { x: 3600, y: zones.vo2max_zone.max },
+            { x: 3600, y: zones.threshold_zone.max }
+        ];
+        
+        // 无氧区间 (130% CP - 80% Pmax)
+        const anaerobicZoneData = [
+            { x: 1, y: zones.vo2max_zone.max },
+            { x: 1, y: zones.anaerobic_zone.max },
+            { x: 3600, y: zones.anaerobic_zone.max },
+            { x: 3600, y: zones.vo2max_zone.max }
+        ];
+        
+        // 神经肌肉区间 (80-100% Pmax)
+        const neuromuscularZoneData = [
+            { x: 1, y: zones.anaerobic_zone.max },
+            { x: 1, y: zones.neuromuscular_zone.max },
+            { x: 3600, y: zones.neuromuscular_zone.max },
+            { x: 3600, y: zones.anaerobic_zone.max }
+        ];
+
+        // 使用获取的颜色创建数据集
         new Chart(ctx, {
             type: 'scatter',
             data: {
                 datasets: [
+                    // region 区间数据集
+                    {
+                        label: '恢复区间',
+                        data: recoveryZoneData,
+                        backgroundColor: colors.recovery,
+                        borderWidth: 0,
+                        pointRadius: 0,
+                        showLine: true,
+                        fill: true,
+                        tension: 0,
+                        hoverEnabled: false,
+                        meta: { skipTooltip: true }
+                    },
+                    {
+                        label: '耐力区间',
+                        data: enduranceZoneData,
+                        backgroundColor: colors.endurance,
+                        borderWidth: 0,
+                        pointRadius: 0,
+                        showLine: true,
+                        fill: true,
+                        tension: 0,
+                        hoverEnabled: false,
+                        meta: { skipTooltip: true }
+                    },
+                    {
+                        label: '节奏区间',
+                        data: tempoZoneData,
+                        backgroundColor: colors.tempo,
+                        borderWidth: 0,
+                        pointRadius: 0,
+                        showLine: true,
+                        fill: true,
+                        tension: 0,
+                        hoverEnabled: false,
+                        meta: { skipTooltip: true }
+                    },
+                    {
+                        label: '阈值区间',
+                        data: thresholdZoneData,
+                        backgroundColor: colors.threshold,
+                        borderWidth: 0,
+                        pointRadius: 0,
+                        showLine: true,
+                        fill: true,
+                        tension: 0,
+                        hoverEnabled: false,
+                        meta: { skipTooltip: true }
+                    },
+                    {
+                        label: 'VO2Max区间',
+                        data: vo2maxZoneData,
+                        backgroundColor: colors.vo2max,
+                        borderWidth: 0,
+                        pointRadius: 0,
+                        showLine: true,
+                        fill: true,
+                        tension: 0,
+                        hoverEnabled: false,
+                        meta: { skipTooltip: true }
+                    },
+                    {
+                        label: '无氧区间',
+                        data: anaerobicZoneData,
+                        backgroundColor: colors.anaerobic,
+                        borderWidth: 0,
+                        pointRadius: 0,
+                        showLine: true,
+                        fill: true,
+                        tension: 0,
+                        hoverEnabled: false,
+                        meta: { skipTooltip: true }
+                    },
+                    {
+                        label: '神经肌肉区间',
+                        data: neuromuscularZoneData,
+                        backgroundColor: colors.neuromuscular,
+                        borderWidth: 0,
+                        pointRadius: 0,
+                        showLine: true,
+                        fill: true,
+                        tension: 0,
+                        hoverEnabled: false,
+                        meta: { skipTooltip: true }
+                    },
+                    // region 拟合曲线+原始数据点+CP线
                     {
                         label: '拟合功率曲线',
                         data: chartData,
@@ -446,7 +605,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         showLine: true,
                         tension: 0,
                         pointRadius: 0,
-                        pointHoverRadius: 8
+                        pointHoverRadius: 8,
+                        hiddenInLegend: true,
                     },
                     {
                         label: '原始数据点',
@@ -457,13 +617,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         showLine: false,
                         pointRadius: 6,
                         pointHoverRadius: 8,
-                        pointStyle: 'star'
+                        pointStyle: 'star',
+                        hiddenInLegend: true,
                     },
                     {
                         label: '临界功率 (CP)',
                         data: cpLineData,
-                        borderColor: 'rgba(82, 123, 195, 0.8)',
-                        backgroundColor: 'rgba(149, 107, 239, 0.3)',
+                        borderColor: 'rgb(0, 0, 0)',
                         borderWidth: 2,
                         borderDash: [6, 4],  // 虚线样式
                         showLine: true,
@@ -475,10 +635,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         pointHoverRadius: 0,
                         pointHitRadius: 0,
                         pointHoverBorderWidth: 0,
-                        meta: {
-                            skipTooltip: true
-                        }
+                        hiddenInLegend: true,
+                        meta: { skipTooltip: true }
                     }
+                    // endregion
                 ]
             },
             options: {
@@ -494,7 +654,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         callbacks: {
                             label: function(context) {
                                 if (context.dataset.meta && context.dataset.meta.skipTooltip) {
-                                    return null;  // 返回null将跳过该项目的tooltip
+                                    return null;
                                 }
 
                                 const datasetLabel = context.dataset.label || '';
@@ -509,7 +669,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     const currentPower = context.parsed.y;
                                     
                                     // 查找对应时间点的拟合值
-                                    const fittedData = context.chart.data.datasets[0].data;
+                                    const fittedData = chartData.filter(point => point.x === currentTime);
                                     const matchingPoint = fittedData.find(point => Math.abs(point.x - currentTime) < 0.001);
                                     
                                     if (matchingPoint) {
@@ -532,7 +692,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         padding: 12
                     },
                     legend: {
-                        display: false,
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            font: {
+                                size: 14
+                            },
+                            usePointStyle: true,
+                            padding: 20,
+                            filter: (legendItem, chartData) => {
+                                const dataset = chartData.datasets[legendItem.datasetIndex];
+                                return dataset.hiddenInLegend !== true;
+                            }
+                        },
+                        onClick: null,
+                        onHover: null
                     },
                     customResultsDisplay: {
                         cpValue: cpValue,
