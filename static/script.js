@@ -370,15 +370,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // 首先清除任何已存在的图表弹窗
         const existingPopup = document.querySelector('.info-popup');
         if (existingPopup) {
-            existingPopup.remove();
+            return
         }
 
         // 创建弹窗容器
         const popup = document.createElement('div');
-        popup.className = 'info-popup chart-popup'; // 添加chart-popup类用于特殊样式
+        popup.className = 'info-popup chart-popup';
         popup.innerHTML = `
             <div class="info-popup-header">
-                <h3>功率-时间曲线</h3>
+                <h3>功率曲线</h3>
                 <button class="info-popup-close">&times;</button>
             </div>
             <div class="info-popup-content chart-content">
@@ -424,14 +424,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }));
 
         // 添加CP渐近线数据
-        // 使用window.calculatedData获取CP值
         const cpValue = window.calculatedData.cp;
-        
-        // 创建CP渐近线的数据点 - 从x轴最小值到最大值
         const cpLineData = [
             { x: 1, y: cpValue },    // 从1秒开始(对数轴的最小值)
             { x: 3600, y: cpValue }  // 到3600秒(1小时)结束
         ];
+
+        const pmaxValue = window.calculatedData.pmax;
 
         // 创建图表
         new Chart(ctx, {
@@ -471,7 +470,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         fill: false,
                         pointRadius: 0,
                         tension: 0,
-                        showInLegend: false
+                        hoverEnabled: false,
+                        hitRadius: 0,
+                        pointHoverRadius: 0,
+                        pointHitRadius: 0,
+                        pointHoverBorderWidth: 0,
+                        meta: {
+                            skipTooltip: true
+                        }
                     }
                 ]
             },
@@ -487,8 +493,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     tooltip: {
                         callbacks: {
                             label: function(context) {
+                                if (context.dataset.meta && context.dataset.meta.skipTooltip) {
+                                    return null;  // 返回null将跳过该项目的tooltip
+                                }
+
                                 const datasetLabel = context.dataset.label || '';
                                 return ` ${datasetLabel} - 时间: ${context.parsed.x.toFixed(1)}s,  功率: ${context.parsed.y.toFixed(1)}w`;
+                            },
+                            afterLabel: function(context) {
+                                const datasetLabel = context.dataset.label || '';
+                                let errorInfo = '';
+                                // 计算误差信息
+                                if (datasetLabel === '原始数据点') {
+                                    const currentTime = context.parsed.x;
+                                    const currentPower = context.parsed.y;
+                                    
+                                    // 查找对应时间点的拟合值
+                                    const fittedData = context.chart.data.datasets[0].data;
+                                    const matchingPoint = fittedData.find(point => Math.abs(point.x - currentTime) < 0.001);
+                                    
+                                    if (matchingPoint) {
+                                        const fittedPower = matchingPoint.y;
+                                        const absoluteError = Math.abs(fittedPower - currentPower);
+                                        const relativeError = (absoluteError / currentPower) * 100;
+                                        errorInfo = `预测误差: 绝对误差 ${absoluteError.toFixed(1)}w, 相对误差 ${relativeError.toFixed(1)}%`;
+                                    }
+                                }
+                                return errorInfo;
                             }
                         },
                         usePointStyle: true,
@@ -501,21 +532,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         padding: 12
                     },
                     legend: {
-                        display: true,
-                        position: 'bottom',
-                        labels: {
-                            font: {
-                                size: 14
-                            },
-                            usePointStyle: true,
-                            padding: 20,
-                            filter: (legendItem, chartData) => {
-                                const dataset = chartData.datasets[legendItem.datasetIndex];
-                                return dataset.showInLegend !== false;
-                            }
-                        },
-                        onClick: null,
-                        onHover: null
+                        display: false,
+                    },
+                    customResultsDisplay: {
+                        cpValue: cpValue,
+                        pmaxValue: pmaxValue
                     }
                 },
                 scales: {
@@ -553,6 +574,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                 size: 14
                             },
                             padding: 10
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                            drawBorder: true,
+                            drawTicks: true
                         }
                     },
                     y: {
@@ -571,10 +597,54 @@ document.addEventListener('DOMContentLoaded', function() {
                                 size: 14
                             },
                             padding: 10
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                            drawBorder: true,
+                            drawTicks: true
                         }
                     }
                 }
-            }
+            },
+            plugins: [{
+                id: 'customResultsDisplay',
+                beforeDraw: (chart) => {
+                    const ctx = chart.ctx;
+                    const customPlugin = chart.options.plugins.customResultsDisplay;
+                    const cpValue = customPlugin.cpValue;
+                    const pmaxValue = customPlugin.pmaxValue;
+                    
+                    ctx.font = 'bold 14px Arial';
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'top';
+                    
+                    const chartArea = chart.chartArea;
+                    
+                    const x = chartArea.right;
+                    const y = chartArea.top;
+                    
+                    // 计算背景框大小
+                    const cpText = `临界功率 (CP): ${cpValue.toFixed(1)} w`;
+                    const pmaxText = `最大瞬时功率 (Pmax): ${pmaxValue.toFixed(1)} w`;
+                    const textWidth = Math.max(
+                        ctx.measureText(cpText).width, 
+                        ctx.measureText(pmaxText).width
+                    );
+                    const padding = 10;
+                    
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.fillRect(
+                        x - textWidth - padding * 2, 
+                        y, 
+                        textWidth + padding * 2, 
+                        50
+                    );
+                    
+                    ctx.fillStyle = '#333';
+                    ctx.fillText(cpText, x - padding, y + padding);
+                    ctx.fillText(pmaxText, x - padding, y + padding + 25);
+                }
+            }]
         });
     }
 
