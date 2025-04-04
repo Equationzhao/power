@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>功率预测模型</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>A 3-parameter critical power model</h1>
+        </header>
+
+        <main>
+            <div class="form-container">
+                <form id="powerForm">
+                    <div class="form-group">
+                        <label for="runtimes">运行次数:</label>
+                        <input type="number" id="runtimes" value="10000" min="1" max="1000000">
+                        <span class="hint">模型拟合的迭代次数，建议10000-100000</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="weight">体重 (kg):</label>
+                        <input type="number" id="weight" step="0.1" placeholder="可选，用于预测VO2Max">
+                    </div>
+
+                    <div class="power-points">
+                        <h3>功率-时间数据点</h3>
+                        <div class="points-container" id="pointsContainer">
+                        </div>
+                        <button type="button" id="addPoint" class="add-btn">添加数据点</button>
+                    </div>
+
+                    <div class="sample-data">
+                        <button type="button" id="useExampleData" class="example-btn">使用示例数据测试</button>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" id="calculate" class="primary-btn">计算模型</button>
+                        <button type="reset" class="secondary-btn">重置</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="results-container" id="results">
+                <h2>计算结果</h2>
+                <div class="results-content" id="resultsContent">
+                    <p class="placeholder">请输入计算参数</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
