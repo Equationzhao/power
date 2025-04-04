@@ -11,7 +11,7 @@ function getInfoContent(infoType) {
                 <ul>
                     <li>接近第二乳酸阈值和最大乳酸稳态(MLSS)</li>
                     <li>表示有氧代谢系统的最大稳定输出能力</li>
-                    <li>在此强度下，乳酸产生和清除处于平衡状态</li>
+                    <li>在此强度下，乳酸产生和清除处于动态平衡状态</li>
                 </ul>
             `
         },
@@ -23,7 +23,6 @@ function getInfoContent(infoType) {
                 
                 <h4>意义：</h4>
                 <ul>
-                    <li>相对功率指标，能更好地比较不同体重运动员的能力</li>
                     <li>在爬坡等对抗重力的情境下，是预测表现的关键指标</li>
                     <li>比绝对功率更有效地反映耐力骑行能力</li>
                 </ul>
@@ -41,7 +40,7 @@ function getInfoContent(infoType) {
             title: "无氧储备 (Anaerobic Reserve, W')",
             body: `
                 <h4>定义：</h4>
-                <p>运动员在超过临界功率强度时可以完成的总工作量，单位为焦耳(J)或千焦(kJ)。</p>
+                <p>运动员在超过临界功率强度时可以完成的总功，单位为焦耳(J)或千焦(kJ)。</p>
                 
                 <h4>生理意义：</h4>
                 <ul>
@@ -69,7 +68,7 @@ function getInfoContent(infoType) {
             title: "最大瞬时功率 (Pmax)",
             body: `
                 <h4>定义：</h4>
-                <p>理论上骑行者在瞬间(t→0)能够产生的最大功率输出，三参数模型中的新增参数。</p>
+                <p>理论上骑行者在瞬间(t→0)能够产生的最大功率输出。</p>
                 
                 <h4>生理意义：</h4>
                 <ul>
@@ -103,7 +102,6 @@ function getInfoContent(infoType) {
                 <h4>关键特性：</h4>
                 <ul>
                     <li>表达了功率-时间曲线的曲率</li>
-                    <li>数学关系: τ = W'/(Pmax-CP)</li>
                     <li>较小的τ表示功率衰减更快，较大的τ表示功率衰减更缓慢</li>
                 </ul>
                 
@@ -120,13 +118,18 @@ function getInfoContent(infoType) {
             body: `
                 <h4>定义：</h4>
                 <p>评估临界功率模型拟合质量的统计指标，代表模型预测值与实际测量值之间差异的标准差。</p>
+                <p class="math">RMSE = √[(1/n)·Σ(y<sub>i</sub> - ŷ<sub>i</sub>)<sup>2</sup>]</p>
+                <p>其中 y<sub>i</sub> 是实际测量值，ŷ<sub>i</sub> 是模型预测值，n 是数据点数量。</p>
+                <p>较低的RMSE值表示模型拟合更精确。</p>
             `
         },
         vo2max: {
-            title: "最大摄氧量 (VO2Max)",
+            title: "最大摄氧量 (VO₂Max)",
             body: `
                 <h4>定义：</h4>
                 <p>个体在递增负荷运动中，当摄氧量不再随运动强度增加而增加时所达到的最大值。</p>
+                <p class="math">VO<sub>2</sub>Max = Q<sub>max</sub> × (a-vO<sub>2</sub>)<sub>diff</sub></p>
+                <p>其中 Q<sub>max</sub> 是最大心输出量，(a-vO<sub>2</sub>)<sub>diff</sub> 是动静脉氧差。</p>
                 
                 <h4>生理意义：</h4>
                 <ul>
@@ -293,7 +296,7 @@ function getInfoContent(infoType) {
             `
         },
         vo2max_zone: {
-            title: "VO2Max区间",
+            title: "VO₂Max区间",
             body: `
                 <h4>强度范围：</h4>
                 <p>105% - 130% CP</p>
@@ -310,14 +313,14 @@ function getInfoContent(infoType) {
                 
                 <h4>应用目的：</h4>
                 <ul>
-                    <li>最大化VO2Max发展</li>
+                    <li>最大化VO₂Max发展</li>
                     <li>提高心输出量</li>
                     <li>增强高强度耐受能力</li>
                 </ul>
                 
                 <h4>典型训练形式：</h4>
                 <ul>
-                    <li>VO2Max间歇：3-5分钟×4-8组</li>
+                    <li>VO₂Max间歇：3-5分钟×4-8组</li>
                     <li>高强度训练赛</li>
                     <li>短爬坡重复练习</li>
                 </ul>
@@ -393,13 +396,10 @@ function getInfoContent(infoType) {
     };
 }
 
-// 导出函数以便在其他文件中使用
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { getInfoContent };
 } else {
-    // 在浏览器环境中，将函数添加到全局(window)对象
     window.getInfoContent = getInfoContent;
 }
 
-// 使用ES模块导出语法
 export { getInfoContent };

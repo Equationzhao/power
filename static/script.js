@@ -515,7 +515,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (data.vo2max) {
             resultsHTML += `
             <div class="result-group">
-                <div><span class="result-label info-trigger" data-info="vo2max">最大摄氧量 (VO2Max):</span> <span class="value " data-info="vo2max">${data.vo2max.toFixed(1)}</span> <span class="unit">ml/kg/min</span></div>
+                <div><span class="result-label info-trigger" data-info="vo2max">最大摄氧量 (VO₂Max):</span> <span class="value " data-info="vo2max">${data.vo2max.toFixed(1)}</span> <span class="unit">ml/kg/min</span></div>
             </div>`;
         }
         
@@ -554,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>${data.training_zones.threshold_zone.max.toFixed(0)}</td>
                         </tr>
                         <tr>
-                            <td><span class="zone-text vo2max-text info-trigger" data-info="vo2max_zone">VO2Max区间</span></td>
+                            <td><span class="zone-text vo2max-text info-trigger" data-info="vo2max_zone">VO₂Max区间</span></td>
                             <td>${data.training_zones.vo2max_zone.min.toFixed(0)}</td>
                             <td>${data.training_zones.vo2max_zone.max.toFixed(0)}</td>
                         </tr>
