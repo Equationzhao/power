@@ -1,5 +1,7 @@
 // 获取弹窗内容的信息数据
 function getInfoContent(infoType) {
+    loadMathJax();
+
     const infoContents = {
         cp: {
             title: "临界功率 (CP)",
@@ -20,6 +22,7 @@ function getInfoContent(infoType) {
             body: `
                 <h4>定义：</h4>
                 <p>临界功率(CP)与体重的比值，单位为瓦特/千克(W/kg)。</p>
+                <p>$$PWR = \\frac{CP}{(Weight}$$</p>
                 
                 <h4>意义：</h4>
                 <ul>
@@ -118,8 +121,8 @@ function getInfoContent(infoType) {
             body: `
                 <h4>定义：</h4>
                 <p>评估临界功率模型拟合质量的统计指标，代表模型预测值与实际测量值之间差异的标准差。</p>
-                <p class="math">RMSE = √[(1/n)·Σ(y<sub>i</sub> - ŷ<sub>i</sub>)<sup>2</sup>]</p>
-                <p>其中 y<sub>i</sub> 是实际测量值，ŷ<sub>i</sub> 是模型预测值，n 是数据点数量。</p>
+                <p>$$RMSE = \\sqrt{\\frac{1}{n}\\sum_{i=1}^{n}(y_i - \\hat{y}_i)^2}$$</p>
+                <p>其中 $y_i$ 是实际测量值，$\\hat{y}_i$ 是模型预测值，$n$ 是数据点数量。</p>
                 <p>较低的RMSE值表示模型拟合更精确。</p>
             `
         },
@@ -128,8 +131,8 @@ function getInfoContent(infoType) {
             body: `
                 <h4>定义：</h4>
                 <p>个体在递增负荷运动中，当摄氧量不再随运动强度增加而增加时所达到的最大值。</p>
-                <p class="math">VO<sub>2</sub>Max = Q<sub>max</sub> × (a-vO<sub>2</sub>)<sub>diff</sub></p>
-                <p>其中 Q<sub>max</sub> 是最大心输出量，(a-vO<sub>2</sub>)<sub>diff</sub> 是动静脉氧差。</p>
+                <p>$$VO_2Max = Q_{max} \\times (a-vO_2)_{diff}$$</p>
+                <p>其中 $Q_{max}$ 是最大心输出量，$(a-vO_2)_{diff}$ 是动静脉氧差。</p>
                 
                 <h4>生理意义：</h4>
                 <ul>
@@ -278,7 +281,7 @@ function getInfoContent(infoType) {
                 </ul>
                 
                 <h4>感觉描述：</h4>
-                <p>受控的痛苦、呼吸沉重、只能说单词、腿部明显发紧</p>
+                <p>受控的痛苦、呼吸沉重、难以说法、腿部明显发紧</p>
                 
                 <h4>应用目的：</h4>
                 <ul>
@@ -371,7 +374,7 @@ function getInfoContent(infoType) {
                 </ul>
                 
                 <h4>感觉描述：</h4>
-                <p>爆发性全力、无法维持、骑行频率最大化</p>
+                <p>爆发性全力、无法维持</p>
                 
                 <h4>应用目的：</h4>
                 <ul>
@@ -393,6 +396,29 @@ function getInfoContent(infoType) {
     return infoContents[infoType] || {
         title: "信息",
         body: "<p>没有可用的详细信息。</p>"
+    };
+}
+
+
+// 加载 MathJax 脚本
+function loadMathJax() {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+    script.async = true;
+    document.head.appendChild(script);
+    // 配置 MathJax
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']],
+            processEscapes: true
+        },
+        svg: {
+            fontCache: 'global'
+        },
+        options: {
+            enableMenu: false
+        }
     };
 }
 
