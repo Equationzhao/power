@@ -548,9 +548,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         ticks: {
                             autoSkip: false,
                             callback: function(value) {
-                                sec=[1,5,15];
-                                min=[60,300,600];
-                                hour=[3600];
+                                const sec = [1, 5, 15];
+                                const min = [60, 300, 600];
+                                const hour = [3600];
                                 if (sec.includes(value)) {
                                     return value + 's';
                                 }
