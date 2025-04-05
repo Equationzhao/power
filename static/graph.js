@@ -111,9 +111,10 @@ function showChartSettingsPopup() {
                 </div>
                 <div class="settings-option settings-option-nested ${!settings.showOriginalData ? 'disabled' : ''}">
                     <label for="showOutliers" class="${!settings.showOriginalData ? 'disabled' : ''}">展示异常值</label>
-                    <label class="switch">
+                    <label class="switch ${!settings.showOriginalData ? 'disabled-switch' : ''}">
                         <input type="checkbox" id="showOutliers" ${settings.showOutliers ? 'checked' : ''} ${!settings.showOriginalData ? 'disabled' : ''}>
                         <span class="slider round"></span>
+                        <span class="tooltip-text">需要开启"展示原始值"才能使用此功能</span>
                     </label>
                 </div>
                 <div class="settings-option">
@@ -166,6 +167,13 @@ function showChartSettingsPopup() {
             showOutliersSwitch.disabled = false;
             document.querySelector('label[for="showOutliers"]').classList.remove('disabled');
             document.querySelector('.settings-option-nested').classList.remove('disabled');
+            
+            // 确保当原始值开关打开时，tooltip完全隐藏
+            const tooltipElement = document.querySelector('.tooltip-text');
+            if (tooltipElement) {
+                tooltipElement.style.visibility = 'hidden';
+                tooltipElement.style.opacity = '0';
+            }
         }
         
         // 立即应用设置
@@ -177,6 +185,44 @@ function showChartSettingsPopup() {
         // 立即应用设置
         applySettings();
     });
+    
+    // 当"展示原始值"关闭时，点击"展示异常值"开关的处理
+    const outlierSwitchContainer = document.querySelector('.settings-option-nested');
+    if (outlierSwitchContainer) {
+        // 当"展示原始值"状态改变时，更新开关样式
+        showOriginalDataSwitch.addEventListener('change', function() {
+            const switchLabel = outlierSwitchContainer.querySelector('.switch');
+            if (!this.checked) {
+                switchLabel.classList.add('disabled-switch');
+            } else {
+                switchLabel.classList.remove('disabled-switch');
+            }
+        });
+        
+        // 处理禁用状态下的点击事件
+        const outlierSwitchLabel = outlierSwitchContainer.querySelector('.switch');
+        outlierSwitchLabel.addEventListener('click', function(e) {
+            // 只有当"展示原始值"关闭时才显示tooltip
+            if (!showOriginalDataSwitch.checked) {
+                // 阻止对checkbox的操作
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // 显示tooltip
+                const tooltip = this.querySelector('.tooltip-text');
+                if (tooltip) {
+                    tooltip.style.visibility = 'visible';
+                    tooltip.style.opacity = '1';
+                    
+                    // 短暂显示后隐藏
+                    setTimeout(() => {
+                        tooltip.style.visibility = '';
+                        tooltip.style.opacity = '';
+                    }, 200);
+                }
+            }
+        });
+    }
     
     // 展示非整数时间开关逻辑
     showNonIntegerTimeSwitch.addEventListener('change', function() {

@@ -29,7 +29,6 @@ function updateRemoveButtons() {
         rows.forEach(row => {
             const removeBtn = row.querySelector('.remove-btn');
             removeBtn.classList.add('disabled');
-            removeBtn.setAttribute('title', '最少需要3个数据点才能拟合模型'); // 移除原本的title，因为我们使用自定义tooltip
         });
     } else {
         // 超过3个数据点时，启用所有删除按钮

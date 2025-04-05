@@ -1129,3 +1129,51 @@ input:checked + .slider:before {
 .slider.round:before {
     border-radius: 50%;
 }
+
+/* 开关提示样式 */
+.disabled-switch {
+    position: relative;
+}
+
+.tooltip-text {
+    display: none;
+}
+
+.disabled-switch .tooltip-text {
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    width: max-content;
+    max-width: 200px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    text-align: center;
+    border-radius: var(--radius-s);
+    padding: var(--spacing-xs) var(--spacing-s);
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: opacity 0.3s;
+    font-size: var(--font-size-xs);
+    font-weight: normal;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.disabled-switch .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
+}
+
+.disabled-switch:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
