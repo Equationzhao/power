@@ -118,7 +118,7 @@ function showChartSettingsPopup() {
                     </label>
                 </div>
                 <div class="settings-option">
-                    <label for="showNonIntegerTime">展示非整数时间</label>
+                    <label for="showNonIntegerTime">更平滑的曲线</label>
                     <label class="switch">
                         <input type="checkbox" id="showNonIntegerTime" ${settings.showNonIntegerTime ? 'checked' : ''}>
                         <span class="slider round"></span>

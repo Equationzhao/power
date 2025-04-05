@@ -295,35 +295,83 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // 重置按钮行为
-    form.addEventListener('reset', function () {
-        // 标记当前请求需要被取消
-        if (requestActive) {
-            requestCancelled = true;
-        }
+    form.addEventListener('reset', function (e) {
+        // 阻止默认的重置行为，先显示确认对话框
+        e.preventDefault();
+        
+        // 使用 SweetAlert2 创建一个样式化的确认对话框
+        const swalWithCustomButtons = Swal.mixin({
+			customClass: {
+				confirmButton: "btn btn-success swal-confirm-button",
+				cancelButton: "btn btn-danger swal-cancel-button",
+				actions: "swal-buttons-container"
+			},
+			buttonsStyling: false
+		});
+		
+		// 添加自定义样式到页面
+		if (!document.querySelector('style#swal-custom-style')) {
+			const style = document.createElement('style');
+			style.id = 'swal-custom-style';
+			style.textContent = `
+				.swal-buttons-container {
+					gap: 20px;
+					justify-content: center;
+				}
+				.swal-confirm-button, .swal-cancel-button {
+					min-width: 120px;
+					margin: 0 10px !important;
+				}
+			`;
+			document.head.appendChild(style);
+		}
+		
+		swalWithCustomButtons.fire({
+			title: "确认重置?",
+			text: "所有已输入的数据将被清除，且无法恢复!",
+			icon: "warning",
+			showCancelButton: true,
+			confirmButtonText: "是的，清除数据!",
+			cancelButtonText: "取消",
+			reverseButtons: true
+		}).then((result) => {
+			if (result.isConfirmed) {
+				// 标记当前请求需要被取消
+				if (requestActive) {
+					requestCancelled = true;
+				}
 
-        // 重置结果显示
-        resultsContent.innerHTML = '<p class="placeholder">请输入数据</p>';
+				// 重置结果显示
+				resultsContent.innerHTML = '<p class="placeholder">请输入数据</p>';
 
-        // 移除可能存在的蒙版
-        const overlay = resultsContent.querySelector('.results-overlay');
-        if (overlay) {
-            overlay.remove();
-        }
+				// 移除可能存在的蒙版
+				const overlay = resultsContent.querySelector('.results-overlay');
+				if (overlay) {
+					overlay.remove();
+				}
 
-        // 清除所有数据点行并添加一个空行
-        pointsContainer.innerHTML = '';
-        addPointRow();
-        addPointRow();
-        addPointRow();
+				// 清除所有数据点行并添加一个空行
+				pointsContainer.innerHTML = '';
+				addPointRow();
+				addPointRow();
+				addPointRow();
 
-        // 清除本地存储
-        clearLocalStorage();
+				// 清除本地存储
+				clearLocalStorage();
 
-        // 确保计算按钮可用
-        calculateBtn.disabled = false;
-        calculateBtn.innerHTML = '计算模型';
+				// 确保计算按钮可用
+				calculateBtn.disabled = false;
+				calculateBtn.innerHTML = '计算模型';
+				
+				// 显示成功消息
+				swalWithCustomButtons.fire({
+					title: "已重置!",
+					text: "所有数据已被清除。",
+					icon: "success"
+				});
+			}
+		});
     });
-
 
     // 添加数据点行
     function addPointRow() {

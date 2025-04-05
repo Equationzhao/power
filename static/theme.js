@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const themeToggle = document.getElementById('theme-toggle');
     const htmlElement = document.documentElement;
-    const sidebarToggle = document.getElementById('sidebar-toggle');
+    // const sidebarToggle = document.getElementById('sidebar-toggle');
     const appContainer = document.querySelector('.app-container');
 
     // 从本地存储中获取主题设置
@@ -37,13 +37,13 @@ document.addEventListener('DOMContentLoaded', function () {
         appContainer.classList.add('sidebar-collapsed');
     }
 
-    sidebarToggle.addEventListener('click', function () {
-        appContainer.classList.toggle('sidebar-collapsed');
+    // sidebarToggle.addEventListener('click', function () {
+    //     appContainer.classList.toggle('sidebar-collapsed');
 
-        // 保存侧边栏状态到本地存储
-        const isCollapsed = appContainer.classList.contains('sidebar-collapsed');
-        localStorage.setItem('sidebarCollapsed', isCollapsed);
-    });
+    //     // 保存侧边栏状态到本地存储
+    //     const isCollapsed = appContainer.classList.contains('sidebar-collapsed');
+    //     localStorage.setItem('sidebarCollapsed', isCollapsed);
+    // });
 
     // 在小屏幕上自动收起侧边栏
     const checkScreenSize = function () {

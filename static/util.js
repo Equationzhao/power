@@ -4,8 +4,8 @@ import { getInfoContent } from "./infoContent.js";
 // 创建数据点行
 function createPointRow() {
 	// 创建一个唯一ID以关联label和input
-	const timeId = "time-" + Math.random().toString(36).substr(2, 9);
-	const powerId = "power-" + Math.random().toString(36).substr(2, 9);
+	const timeId = "time-" + Math.random().toString(36).substring(2, 11);
+	const powerId = "power-" + Math.random().toString(36).substring(2, 11);
 
 	// 创建数据点行DOM元素
 	const row = document.createElement("div");
@@ -22,6 +22,7 @@ function createPointRow() {
 	timeInput.id = timeId;
 	timeInput.className = "time-input";
 	timeInput.min = "0";
+	timeInput.step = "0.1"; // 添加step属性以支持一位小数
 	timeInput.placeholder = "秒";
 
 	// 添加功率输入
@@ -35,6 +36,7 @@ function createPointRow() {
 	powerInput.id = powerId;
 	powerInput.className = "power-input";
 	powerInput.min = "0";
+	powerInput.step = "0.1"; // 添加step属性以支持一位小数
 	powerInput.placeholder = "瓦";
 
 	// 添加删除按钮

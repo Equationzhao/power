@@ -139,7 +139,9 @@ body {
     color: var(--text-color);
     transition: background-color 0.3s ease, color 0.3s ease;
     height: 100%;
-    overflow-x: hidden;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
 }
 
 body {
@@ -356,7 +358,7 @@ header h1 {
 /* 内容容器 */
 .content-container {
     flex: 1;
-    padding: 2rem;
+    padding: 20px;
     margin-left: var(--sidebar-width);
     transition: margin-left var(--sidebar-transition);
 }
@@ -378,19 +380,9 @@ header h1 {
 
     .content-container {
         margin-left: 0;
-        padding: 1rem;
+        padding: 20px;
     }
 
-    .sidebar-active .sidebar {
-        transform: translateX(0);
-        box-shadow: var(--shadow);
-    }
-
-    .sidebar-active .sidebar-toggle {
-        left: var(--sidebar-width);
-    }
-
-    /* 在小屏幕上调整GitHub图标位置 */
     .github-link {
         bottom: 15px;
         left: 15px;
@@ -464,7 +456,7 @@ html[data-theme='dark'] .moon-icon {
 main {
     display: flex;
     flex-direction: column;
-    padding: var(--spacing-l);
+    padding: 20px;
 }
 
 @media (min-width: 768px) {
@@ -557,12 +549,9 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 .points-container {
-    height: 35vh;
-    /* 使用视口高度的百分比 */
-    min-height: 150px;
-    /* 最小高度保持 */
-    max-height: 400px;
-    /* 最大高度略微增加 */
+    height: 250px;
+    min-height: 250px;
+    max-height: 450px;
     overflow-y: auto;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-s);
@@ -808,7 +797,7 @@ input[type="number"]::-webkit-inner-spin-button {
     background: var(--bg-color);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-l);
-    padding: var(--spacing-l);
+    padding: 20px;
     box-shadow: var(--shadow);
 }
 
@@ -1488,7 +1477,7 @@ input:checked+.slider:before {
     background: var(--bg-color);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-l);
-    padding: var(--spacing-l);
+    padding: 20px;
     box-shadow: var(--shadow);
 }
 
