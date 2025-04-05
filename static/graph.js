@@ -19,7 +19,16 @@ export function showPowerTimeCurvePopup(curveData, originalPoints, modelParams, 
     popup.innerHTML = `
         <div class="info-popup-header">
             <h3>功率曲线</h3>
-            <button class="info-popup-close">&times;</button>
+            <div class="popup-actions">
+                <div class="download-container">
+                    <button id="downloadChartBtn" class="btn btn-secondary">下载</button>
+                    <div class="download-options" id="downloadOptions">
+                        <button class="download-option" data-format="png">PNG</button>
+                        <button class="download-option" data-format="jpg">JPG</button>
+                    </div>
+                </div> 
+                <button class="info-popup-close">&times;</button>
+            </div>
         </div>
         <div class="info-popup-content chart-content">
             <canvas id="powerTimeCurveChart"></canvas>
@@ -50,6 +59,102 @@ export function showPowerTimeCurvePopup(curveData, originalPoints, modelParams, 
 
     // 绘制功率曲线图
     drawPowerTimeCurve(curveData, originalPoints, modelParams, outliers);
+    
+    // 处理下载按钮逻辑
+    setupDownloadButton();
+}
+
+/**
+ * 设置下载按钮功能
+ */
+function setupDownloadButton() {
+    const downloadBtn = document.getElementById('downloadChartBtn');
+    const downloadOptions = document.getElementById('downloadOptions');
+    
+    // 下载按钮点击事件
+    downloadBtn.addEventListener('click', function(e) {
+        e.stopPropagation(); // 阻止事件冒泡
+        downloadOptions.classList.toggle('show');
+    });
+    
+    // 点击任意位置关闭下拉框
+    document.addEventListener('click', function(e) {
+        if (!e.target.matches('#downloadChartBtn') && downloadOptions.classList.contains('show')) {
+            downloadOptions.classList.remove('show');
+        }
+    });
+    
+    // 格式选项点击事件
+    document.querySelectorAll('.download-option').forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const format = this.getAttribute('data-format');
+            downloadChart(format);
+            downloadOptions.classList.remove('show');
+        });
+    });
+}
+
+/**
+ * 下载图表为指定格式
+ * @param {string} format - 图表格式（png 或 jpg）
+ */
+function downloadChart(format) {
+    const canvas = document.getElementById('powerTimeCurveChart');
+    let dataURL;
+    
+    // 获取当前主题模式
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    // 获取CP值用于文件名
+    const cpValue = window.calculatedData ? window.calculatedData.cp.toFixed(1) : '0';
+    
+    if (format === 'jpg') {
+        // 创建适合当前主题的背景
+        const context = canvas.getContext('2d');
+        const currentImageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        
+        // 保存当前绘图状态
+        context.save();
+        
+        // 创建与当前主题匹配的背景
+        context.globalCompositeOperation = 'destination-over';
+        context.fillStyle = isDarkMode ? '#1e1e1e' : '#FFFFFF'; // 黑暗模式使用深色背景
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 生成数据URL
+        dataURL = canvas.toDataURL('image/jpeg', 0.95);
+        
+        // 恢复原始绘图状态
+        context.restore();
+        context.putImageData(currentImageData, 0, 0);
+    } else {
+        // PNG格式需要先创建新画布来设置背景色
+        const newCanvas = document.createElement('canvas');
+        newCanvas.width = canvas.width;
+        newCanvas.height = canvas.height;
+        const newContext = newCanvas.getContext('2d');
+        
+        // 绘制背景色
+        newContext.fillStyle = isDarkMode ? '#1e1e1e' : '#FFFFFF';
+        newContext.fillRect(0, 0, newCanvas.width, newCanvas.height);
+        
+        // 将原始画布内容绘制到新画布上
+        newContext.drawImage(canvas, 0, 0);
+        
+        // 从新画布生成数据URL
+        dataURL = newCanvas.toDataURL('image/png');
+    }
+    
+    // 创建下载链接，文件名包含CP值
+    const downloadLink = document.createElement('a');
+    downloadLink.href = dataURL;
+    downloadLink.download = `骑行功率曲线_cp_${cpValue}.${format}`;
+    
+    // 模拟点击下载
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
 }
 
 /**
@@ -314,7 +419,7 @@ function drawPowerTimeCurve(curveData, originalPoints, modelParams, outliers) {
                 );
                 const padding = 10;
                 
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0)';
                 ctx.fillRect(
                     x - textWidth - padding * 2, 
                     y, 

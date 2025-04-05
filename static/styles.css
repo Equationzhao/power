@@ -759,9 +759,8 @@ footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-m) var(--spacing-l);
-    background: var(--primary-color);
-    color: white;
+    padding: var(--spacing-s) var(--spacing-l);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .info-popup-header h3 {
@@ -772,21 +771,19 @@ footer {
 .info-popup-close {
     background: none;
     border: none;
-    color: white;
-    font-size: var(--font-size-xxl);
+    font-size: 24px;
     cursor: pointer;
+    color: var(--text-color);
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
     padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: background-color 0.2s;
+    line-height: 1;
+    height: 24px;
+    width: 24px;
 }
 
 .info-popup-close:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    opacity: 1;
 }
 
 .info-popup-content {
@@ -812,6 +809,52 @@ footer {
 
 .info-popup-content li {
     margin-bottom: var(--spacing-xs);
+}
+
+/* 下载按钮样式 */
+.popup-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-s);
+}
+
+.download-container {
+    position: relative;
+    display: inline-block;
+}
+
+.download-options {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: var(--popup-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-s);
+    display: none;
+    flex-direction: column;
+    min-width: 100px;
+    box-shadow: var(--shadow);
+    z-index: 1000;
+    margin-top: 5px;
+    overflow: hidden;
+}
+
+.download-options.show {
+    display: flex;
+}
+
+.download-option {
+    padding: var(--spacing-s) var(--spacing-m);
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: background-color 0.2s ease;
+}
+
+.download-option:hover {
+    background-color: var(--light-bg);
 }
 
 /* 响应式调整 */
@@ -850,6 +893,10 @@ footer {
     .data-btn {
         width: 100%;
     }
+
+    .chart-popup {
+        width: 95%;
+    }
 }
 
 .chart-popup {
@@ -872,12 +919,6 @@ footer {
 
 #powerTimeCurveChart {
     height: 100% !important;
-}
-
-@media (max-width: 767px) {
-    .chart-popup {
-        width: 95%;
-    }
 }
 
 /* 数据点操作按钮区域 */
