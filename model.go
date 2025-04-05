@@ -35,6 +35,28 @@ type PowerTimePoint struct {
 	Power float64 `json:"power"`
 }
 
+func ConvertPowerTimePointToCP(pt []PowerTimePoint) []criticalpower.PowerTimePoint {
+	cp := make([]criticalpower.PowerTimePoint, len(pt))
+	for i, p := range pt {
+		cp[i] = criticalpower.PowerTimePoint{
+			Time:  p.Time,
+			Power: p.Power,
+		}
+	}
+	return cp
+}
+
+func ConvertCPToPowerTimePoint(cp []criticalpower.PowerTimePoint) []PowerTimePoint {
+	pt := make([]PowerTimePoint, len(cp))
+	for i, p := range cp {
+		pt[i] = PowerTimePoint{
+			Time:  p.Time,
+			Power: p.Power,
+		}
+	}
+	return pt
+}
+
 type CalculateResponse struct {
 	CP             float64          `json:"cp"`
 	Wprime         float64          `json:"wprime"`
@@ -44,6 +66,10 @@ type CalculateResponse struct {
 	VO2Max         float64          `json:"vo2max"`
 	TrainingZones  TrainingZones    `json:"training_zones"`
 	PowerTimeCurve []PowerTimePoint `json:"power_time_curve"`
+
+	Outliners        []PowerTimePoint `json:"outliners"`
+	OutlinersCount   int              `json:"outliners_count"`
+	OutlinersPercent float64          `json:"outliners_percent"`
 }
 
 type zone struct {

@@ -25,6 +25,9 @@ type CriticalPowerModel struct {
 	Tau    float64 // 时间常数（秒）
 	RMSE   float64 // 拟合误差（均方根误差）
 
+	Data     []PowerTimePoint // 原始数据点
+	Outliers map[int]struct{} // 异常值索引
+
 	numRuns int // 运行次数
 }
 
@@ -49,10 +52,21 @@ func NewWithRunTimes(numRuns int) *CriticalPowerModel {
 	return m
 }
 
-// Fit 根据功率-时间数据拟合三参数临界功率模型
-func (m *CriticalPowerModel) Fit(data []PowerTimePoint) error {
+// fit 根据功率-时间数据拟合三参数临界功率模型
+func (m *CriticalPowerModel) fit() error {
+	data := m.Data
 	if len(data) < 3 {
 		return errors.New("至少需要3个数据点来拟合三参数模型")
+	}
+
+	if len(m.Outliers) > 0 {
+		filteredData := make([]PowerTimePoint, 0, len(data)-len(m.Outliers))
+		for i, point := range data {
+			if _, ok := m.Outliers[i]; !ok {
+				filteredData = append(filteredData, point)
+			}
+		}
+		data = filteredData
 	}
 
 	// 获取数据中的最大功率和最小功率
@@ -147,6 +161,16 @@ func (m *CriticalPowerModel) Fit(data []PowerTimePoint) error {
 	m.RMSE = math.Sqrt(bestErrorAbsolute)
 
 	return nil
+}
+
+func (m *CriticalPowerModel) Fit(data []PowerTimePoint) error {
+	m.Data = data
+	m.totalFilter()
+	m.fit()
+	// 检测异常值
+	m.detectOutliers(data, 3)
+	// 重新拟合模型，排除异常值
+	return m.fit()
 }
 
 // optimizeModel 优化模型参数
