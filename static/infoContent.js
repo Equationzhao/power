@@ -393,7 +393,7 @@ function getInfoContent(infoType) {
             `
         }
     };
-    
+
     return infoContents[infoType] || {
         title: "信息",
         body: "<p>没有可用的详细信息。</p>"

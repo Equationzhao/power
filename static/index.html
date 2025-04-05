@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN" data-theme="light">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,73 +8,129 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
-    <div class="container">
-        <header>
-            <h1>
-                <a href="https://doi.org/10.1080/00140139608964484" target="_blank" style="color: inherit; text-decoration: none;">
-                    MORTON 3-parameter critical power model
-                </a>
-            </h1>
-            <button id="theme-toggle" class="btn btn-icon theme-toggle">
-                <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="none" d="M0 0h24v24H0z"/><path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z"/></svg>
-                <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path fill="none" d="M0 0h24v24H0z"/><path d="M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2h.1A6.979 6.979 0 0 0 10 7zm-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938 7.999 7.999 0 0 0 4 12z"/></svg>
-            </button>
-        </header>
-
-        <main>
-            <div class="form-container">
-                <form id="powerForm">
-                    <div class="form-group">
-                        <label for="runtimes">运行次数:</label>
-                        <input type="number" id="runtimes" value="10000" min="1" max="5000000" placeholder="模型拟合的迭代次数，建议10000-1000000">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="weight">体重 (kg):</label>
-                        <input type="number" id="weight" step="0.1" placeholder="可选，用于预测VO2Max和计算功体比">
-                    </div>
-
-                    <div class="form-group switch-container">
-                        <label for="outlierDetect">异常值检测:</label>
-                        <label class="switch">
-                            <input type="checkbox" id="outlierDetect" checked>
-                            <span class="slider round"></span>
-                        </label>
-                        <span class="hint">开启后自动检测并排除异常数据点</span>
-                    </div>
-
-                    <div class="power-points">
-                        <h3>功率-时间数据点</h3>
-                        <div class="points-container" id="pointsContainer">
-                        </div>
-                        <div class="data-actions">
-                            <button type="button" id="addPoint" class="btn btn-secondary data-btn">添加数据点</button>
-                            <button type="button" id="useExampleData" class="btn btn-secondary data-btn">使用示例数据测试</button>
-                        </div>
-                        <div class="data-actions">
-                            <button type="button" class="btn btn-secondary full-width" id="importCsvBtn">导入CSV</button>
-                            <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
-                        </div>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" id="calculate" class="btn btn-success action-btn">计算模型</button>
-                        <button type="reset" class="btn btn-danger action-btn">重置</button>
-                    </div>
-                </form>
+    <div class="app-container">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>
+                    <a href="https://doi.org/10.1080/00140139608964484" target="_blank"
+                        style="color: inherit; text-decoration: none;">
+                        MORTON <br> 3-parameter <br> critical power model
+                    </a>
+                </h1>
+                <button id="theme-toggle" class="btn btn-icon theme-toggle">
+                    <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                        <path fill="none" d="M0 0h24v24H0z" />
+                        <path
+                            d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12zm0-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM11 1h2v3h-2V1zm0 19h2v3h-2v-3zM3.515 4.929l1.414-1.414L7.05 5.636 5.636 7.05 3.515 4.93zM16.95 18.364l1.414-1.414 2.121 2.121-1.414 1.414-2.121-2.121zm2.121-14.85l1.414 1.415-2.121 2.121-1.414-1.414 2.121-2.121zM5.636 16.95l1.414 1.414-2.121 2.121-1.414-1.414 2.121-2.121zM23 11v2h-3v-2h3zM4 11v2H1v-2h3z" />
+                    </svg>
+                    <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24"
+                        height="24">
+                        <path fill="none" d="M0 0h24v24H0z" />
+                        <path
+                            d="M10 7a7 7 0 0 0 12 4.9v.1c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2h.1A6.979 6.979 0 0 0 10 7zm-6 5a8 8 0 0 0 15.062 3.762A9 9 0 0 1 8.238 4.938 7.999 7.999 0 0 0 4 12z" />
+                    </svg>
+                </button>
             </div>
 
-            <div class="results-container" id="results">
-                <h2>计算结果</h2>
-                <div class="results-content" id="resultsContent">
-                    <p class="placeholder">请输入计算参数</p>
+            <div class="sidebar-content">
+                <h2>使用说明</h2>
+                <div class="sidebar-section">
+                    <p>本模型基于MORTON三参数功率模型</p>
+                    <p>输入功率-时间数据点，模型将自动计算并生成结果。</p>
+                    <p>可以进行多次全力骑行，分别记录 5s, 30s, 10min 的功率数据点，并输入到模型中。</p>
+                    <p>模型将自动计算功率-时间关系，并给出功率曲线图。</p>
+                </div>
+                <div class="sidebar-section">
+                    <p>模型支持异常值检测，在输入数据可能存在误差值时建议开启。</p>
+                    <p>输入体重，将计算VO₂Max和功体比。</p>
+                </div>
+                <div class="sidebar-section">
+                    <p>支持CSV文件导入，格式为：<br>时间(秒),功率(W)</p>
+                    <p>请确保CSV文件中没有表头</p>
                 </div>
             </div>
-        </main>
+
+            <!-- GitHub项目链接 -->
+            <div class="github-link">
+                <a href="https://github.com/Equationzhao/power" target="_blank" title="GitHub项目地址">
+                    <svg class="github-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24"
+                        height="24">
+                        <path fill="none" d="M0 0h24v24H0z" />
+                        <path
+                            d="M12 2C6.475 2 2 6.475 2 12a9.994 9.994 0 0 0 6.838 9.488c.5.087.687-.213.687-.476 0-.237-.013-1.024-.013-1.862-2.512.463-3.162-.612-3.362-1.175-.113-.288-.6-1.175-1.025-1.413-.35-.187-.85-.65-.013-.662.788-.013 1.35.725 1.538 1.025.9 1.512 2.338 1.087 2.912.825.088-.65.35-1.087.638-1.337-2.225-.25-4.55-1.113-4.55-4.938 0-1.088.387-1.987 1.025-2.688-.1-.25-.45-1.275.1-2.65 0 0 .837-.262 2.75 1.026a9.28 9.28 0 0 1 2.5-.338c.85 0 1.7.112 2.5.337 1.912-1.3 2.75-1.024 2.75-1.024.55 1.375.2 2.4.1 2.65.637.7 1.025 1.587 1.025 2.687 0 3.838-2.337 4.688-4.562 4.938.362.312.675.912.675 1.85 0 1.337-.013 2.412-.013 2.75 0 .262.188.574.688.474A10.016 10.016 0 0 0 22 12c0-5.525-4.475-10-10-10z" />
+                    </svg>
+                </a>
+            </div>
+        </aside>
+
+        <!-- 侧边栏切换按钮 -->
+        <!-- <button id="sidebar-toggle" class="sidebar-toggle">
+            <span class="toggle-icon"></span> -->
+        <!-- </button> -->
+
+        <div class="content-container">
+            <main>
+                <div class="form-container input-section">
+                    <h2>输入参数</h2>
+                    <form id="powerForm">
+                        <div class="form-group">
+                            <label for="runtimes">运行次数:</label>
+                            <input type="number" id="runtimes" value="10000" min="1" max="5000000"
+                                placeholder="模型拟合的迭代次数，建议10000-1000000">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="weight">体重 (kg):</label>
+                            <input type="number" id="weight" step="0.1" placeholder="可选，用于预测VO2Max和计算功体比">
+                        </div>
+
+                        <div class="form-group switch-container">
+                            <label for="outlierDetect">异常值检测:</label>
+                            <label class="switch">
+                                <input type="checkbox" id="outlierDetect" checked>
+                                <span class="slider round"></span>
+                            </label>
+                            <span class="hint">开启后自动检测并排除异常数据点</span>
+                        </div>
+
+                        <div class="power-points">
+                            <h3>功率-时间数据点</h3>
+                            <div class="points-container" id="pointsContainer">
+                            </div>
+                            <div class="data-actions">
+                                <button type="button" id="addPoint" class="btn btn-secondary data-btn">添加数据点</button>
+                                <button type="button" id="useExampleData"
+                                    class="btn btn-secondary data-btn">使用示例数据测试</button>
+                            </div>
+                            <div class="data-actions">
+                                <button type="button" class="btn btn-secondary full-width"
+                                    id="importCsvBtn">导入CSV</button>
+                                <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" id="calculate" class="btn btn-success action-btn">计算模型</button>
+                            <button type="reset" class="btn btn-danger action-btn">重置</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="results-container" id="results">
+                    <h2>计算结果</h2>
+                    <div class="results-content" id="resultsContent">
+                        <p class="placeholder">请输入计算参数</p>
+                    </div>
+                </div>
+            </main>
+        </div>
     </div>
 
     <script type="module" src="script.js"></script>
     <script type="module" src="theme.js"></script>
 </body>
+
 </html>
