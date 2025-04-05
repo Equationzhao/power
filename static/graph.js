@@ -144,6 +144,11 @@ function showChartSettingsPopup() {
         settingsPopup.remove();
     });
     
+    // 渐入显示弹窗
+    setTimeout(() => {
+        settingsPopup.classList.add('show');
+    }, 10);
+    
     // 设置开关联动逻辑和即时生效
     const showOriginalDataSwitch = document.getElementById('showOriginalData');
     const showOutliersSwitch = document.getElementById('showOutliers');

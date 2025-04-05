@@ -862,7 +862,7 @@ footer {
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) scale(0.9);
     background-color: var(--popup-bg);
     border-radius: var(--radius-m);
     box-shadow: var(--shadow);
@@ -870,7 +870,13 @@ footer {
     padding: 0;
     min-width: 300px;
     max-width: 90%;
-    transition: background-color 0.3s ease;
+    opacity: 0;
+    transition: transform 0.3s, opacity 0.3s, background-color 0.3s ease;
+}
+
+.settings-popup.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
 }
 
 .settings-popup-content {
@@ -983,11 +989,25 @@ footer {
 }
 
 .chart-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
     width: 90%;
     max-width: 1200px;
     max-height: 90vh;
     background-color: var(--chart-bg);
-    transition: background-color 0.3s ease;
+    border-radius: var(--radius-l);
+    box-shadow: 0 5px 30px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    overflow: hidden;
+    opacity: 0;
+    transition: transform 0.3s, opacity 0.3s, background-color 0.3s ease;
+}
+
+.chart-popup.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
 }
 
 /* 图表更新动画 */
