@@ -9,9 +9,10 @@ import (
 const maxRuntimes = 1000000
 
 type CalculateRequest struct {
-	PT       []PowerTimePoint `json:"pt"`
-	Runtimes int              `json:"runtimes"`
-	Weight   float64          `json:"weight"`
+	PT            []PowerTimePoint `json:"pt"`
+	Runtimes      int              `json:"runtimes"`
+	Weight        float64          `json:"weight"`
+	OutlierDetect bool             `json:"outlier_detect"`
 }
 
 func (req *CalculateRequest) Normalize() {
@@ -67,9 +68,10 @@ type CalculateResponse struct {
 	TrainingZones  TrainingZones    `json:"training_zones"`
 	PowerTimeCurve []PowerTimePoint `json:"power_time_curve"`
 
-	Outliners        []PowerTimePoint `json:"outliners"`
-	OutlinersCount   int              `json:"outliners_count"`
-	OutlinersPercent float64          `json:"outliners_percent"`
+	PowerTimePoint  []PowerTimePoint `json:"power_time_point"`
+	Outliers        []PowerTimePoint `json:"outliers"`
+	OutliersCount   int              `json:"outliers_count"`
+	OutliersPercent float64          `json:"outliers_percent"`
 }
 
 type zone struct {

@@ -28,27 +28,43 @@ type CriticalPowerModel struct {
 	Data     []PowerTimePoint // 原始数据点
 	Outliers map[int]struct{} // 异常值索引
 
-	numRuns int // 运行次数
+	numRuns       int  // 运行次数
+	outlierDetect bool // 是否检测异常值
 }
 
 const DefaultNumRuns = 10000
 
-func New() *CriticalPowerModel {
-	m := &CriticalPowerModel{
-		numRuns: DefaultNumRuns,
+// ModelOption 模型选项
+type ModelOption func(*CriticalPowerModel)
+
+// WithRunTimes 设置运行次数
+func WithRunTimes(numRuns int) ModelOption {
+	return func(m *CriticalPowerModel) {
+		if numRuns <= 0 {
+			numRuns = DefaultNumRuns
+		}
+		m.numRuns = numRuns
 	}
-	return m
 }
 
-// NewWithRunTimes 指定运行次数
-func NewWithRunTimes(numRuns int) *CriticalPowerModel {
-	if numRuns <= 0 {
-		numRuns = DefaultNumRuns
+// WithOutlierDetect 设置是否检测异常值
+func WithOutlierDetect() ModelOption {
+	return func(m *CriticalPowerModel) {
+		m.outlierDetect = true
+	}
+}
+
+// New 创建模型，可以传入选项
+func New(options ...ModelOption) *CriticalPowerModel {
+	m := &CriticalPowerModel{
+		numRuns:       DefaultNumRuns,
+		outlierDetect: true, // 默认开启异常值检测
 	}
 
-	m := &CriticalPowerModel{
-		numRuns: numRuns,
+	for _, option := range options {
+		option(m)
 	}
+
 	return m
 }
 
@@ -165,12 +181,25 @@ func (m *CriticalPowerModel) fit() error {
 
 func (m *CriticalPowerModel) Fit(data []PowerTimePoint) error {
 	m.Data = data
-	m.totalFilter()
-	m.fit()
-	// 检测异常值
-	m.detectOutliers(data, 3)
-	// 重新拟合模型，排除异常值
-	return m.fit()
+	if m.outlierDetect {
+		m.totalFilter()
+	}
+	err := m.fit()
+	if err != nil {
+		return err
+	}
+	if m.outlierDetect {
+		// 重新拟合模型，排除异常值
+		for range 10 {
+			m.detectOutliers(3)
+			m.detectNonMaximalEffort()
+			err = m.fit()
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // optimizeModel 优化模型参数

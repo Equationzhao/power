@@ -7,7 +7,7 @@ import (
 )
 
 func TestPowerModel(t *testing.T) {
-	model := criticalpower.NewWithRunTimes(100000)
+	model := criticalpower.New(criticalpower.WithRunTimes(10000))
 
 	data := []criticalpower.PowerTimePoint{
 		{Time: 1, Power: 768},    // 1秒测试

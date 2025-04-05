@@ -5,7 +5,8 @@ import (
 	"slices"
 )
 
-func (m *CriticalPowerModel) detectOutliers(data []PowerTimePoint, threshold float64) {
+func (m *CriticalPowerModel) detectOutliers(threshold float64) {
+	data := m.Data
 	outlierIndices := []int{}
 
 	// 计算每个点的残差
@@ -45,18 +46,19 @@ func (m *CriticalPowerModel) detectOutliers(data []PowerTimePoint, threshold flo
 }
 
 func (m *CriticalPowerModel) totalFilter() {
-	m.filterInvalidPoints()
+	m.removeInvalidPoints()
 	m.removeDuplicateTimePoints()
 	m.enforcePowerTimeConsistency()
+	m.handleDataJump()
 }
 
-func (m *CriticalPowerModel) filterInvalidPoints() {
+func (m *CriticalPowerModel) removeInvalidPoints() {
 	data := m.Data
 	if m.Outliers == nil {
 		m.Outliers = make(map[int]struct{})
 	}
 	for i, point := range data {
-		if point.Power <= 0 || point.Power > 3000 || point.Time <= 0 || point.Time > 3600 {
+		if point.Power <= 0 || point.Power > 3000 || point.Time <= 0 {
 			m.Outliers[i] = struct{}{}
 		}
 	}
@@ -111,6 +113,36 @@ func (m *CriticalPowerModel) enforcePowerTimeConsistency() {
 			}
 		} else {
 			filtered = append(filtered, current)
+		}
+	}
+}
+
+// 处理数据跳变
+// 如果相邻的两者时间差距在 20% 之内，功率差距超过 10%，则认为是异常值
+func (m *CriticalPowerModel) handleDataJump() {
+	data := m.Data
+	if m.Outliers == nil {
+		m.Outliers = make(map[int]struct{})
+	}
+	for i := 1; i < len(data); i++ {
+		if math.Abs(data[i].Time-data[i-1].Time)/data[i-1].Time < 0.2 &&
+			math.Abs(data[i].Power-data[i-1].Power)/data[i-1].Power > 0.2 {
+			m.Outliers[i] = struct{}{}
+		}
+	}
+}
+
+func (m *CriticalPowerModel) detectNonMaximalEffort() {
+	data := m.Data
+	if m.Outliers == nil {
+		m.Outliers = make(map[int]struct{})
+	}
+	for i, point := range data {
+		expectedPower := m.PredictPower(point.Time)
+		actualPower := point.Power
+
+		if (point.Time > 600 && actualPower < 0.9*expectedPower) || point.Power < m.CP {
+			m.Outliers[i] = struct{}{}
 		}
 	}
 }

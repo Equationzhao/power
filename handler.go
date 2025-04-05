@@ -6,7 +6,6 @@ import (
 
 	"slices"
 
-	"github.com/Equationzhao/power/criticalpower"
 	"github.com/bytedance/sonic"
 	"github.com/valyala/fasthttp"
 )
@@ -39,7 +38,7 @@ func calculateHandler(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	data.Normalize()
-	model, err := CalculateModel(ConvertPowerTimePointToCP(data.PT), data.Runtimes)
+	model, err := CalculateModel(ConvertPowerTimePointToCP(data.PT), data.Runtimes, data.OutlierDetect)
 	if err != nil {
 		ctx.Error(createErrorResponse(err.Error()), fasthttp.StatusInternalServerError)
 		return
@@ -93,9 +92,20 @@ func calculateHandler(ctx *fasthttp.RequestCtx) {
 		})
 	}
 
-	outliners := make([]criticalpower.PowerTimePoint, 0)
-	for index := range model.Outliers {
-		outliners = append(outliners, model.Data[index])
+	outliers := make([]PowerTimePoint, 0)
+	powerTimePoint := make([]PowerTimePoint, 0)
+	for i, pt := range model.Data {
+		if _, ok := model.Outliers[i]; !ok {
+			powerTimePoint = append(powerTimePoint, PowerTimePoint{
+				Time:  pt.Time,
+				Power: pt.Power,
+			})
+		} else {
+			outliers = append(outliers, PowerTimePoint{
+				Time:  pt.Time,
+				Power: pt.Power,
+			})
+		}
 	}
 
 	resp := CalculateResponse{
@@ -113,10 +123,11 @@ func calculateHandler(ctx *fasthttp.RequestCtx) {
 			AnaerobicZone:     zone{Min: tzBO.AnaerobicZone.Min, Max: tzBO.AnaerobicZone.Max},
 			NeuromuscularZone: zone{Min: tzBO.NeuromuscularZone.Min, Max: tzBO.NeuromuscularZone.Max},
 		},
-		PowerTimeCurve:   powerTimeCurve,
-		Outliners:        ConvertCPToPowerTimePoint(outliners),
-		OutlinersCount:   len(outliners),
-		OutlinersPercent: float64(len(outliners)) / float64(len(data.PT)) * 100,
+		PowerTimeCurve:  powerTimeCurve,
+		PowerTimePoint:  powerTimePoint,
+		Outliers:        outliers,
+		OutliersCount:   len(outliers),
+		OutliersPercent: float64(len(outliers)) / float64(len(data.PT)) * 100,
 	}
 	if data.Weight > 0 {
 		resp.VO2Max = model.PredictVO2Max(data.Weight)

@@ -16,7 +16,7 @@ func TestOutlierDetection(t *testing.T) {
 	combinedData := append(normalData, outlierData...)
 
 	// 创建模型并拟合
-	model := criticalpower.NewWithRunTimes(100000)
+	model := criticalpower.New(criticalpower.WithRunTimes(100000), criticalpower.WithOutlierDetect())
 	err := model.Fit(combinedData)
 	if err != nil {
 		t.Fatalf("模型拟合失败: %v", err)

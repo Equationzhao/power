@@ -1,12 +1,16 @@
 // 创建数据点行
 function createPointRow() {
+    // 创建一个唯一ID以关联label和input
+    const timeId = 'time-' + Math.random().toString(36).substr(2, 9);
+    const powerId = 'power-' + Math.random().toString(36).substr(2, 9);
+    
     const row = document.createElement('div');
     row.className = 'point-row';
     row.innerHTML = `
-        <label>时间 (秒):</label>
-        <input type="number" class="time-input" min="0.1" step="any">
-        <label>功率 (瓦):</label>
-        <input type="number" class="power-input" min="0.1" step="any">
+        <label for="${timeId}">时间 (秒):</label>
+        <input type="number" id="${timeId}" name="${timeId}" class="time-input" min="0.1" step="any">
+        <label for="${powerId}">功率 (瓦):</label>
+        <input type="number" id="${powerId}" name="${powerId}" class="power-input" min="0.1" step="any">
         <button type="button" class="remove-btn" title="移除此数据点">
             ✕
             <span class="tooltip">至少需要3个数据点</span>
@@ -62,7 +66,8 @@ function saveToLocalStorage() {
     const formData = {
         points: [],
         weight: document.getElementById('weight').value,
-        runtimes: document.getElementById('runtimes').value
+        runtimes: document.getElementById('runtimes').value,
+        outlierDetect: document.getElementById('outlierDetect').checked
     };
     
     // 收集所有数据点
