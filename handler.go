@@ -3,7 +3,7 @@ package main
 import (
 	"log/slog"
 	"path/filepath"
-
+	"runtime/debug"
 	"slices"
 
 	"github.com/bytedance/sonic"
@@ -23,7 +23,7 @@ func createErrorResponse(errMsg string) string {
 func calculateHandler(ctx *fasthttp.RequestCtx) {
 	defer func() {
 		if r := recover(); r != nil {
-			slog.Error("panic in calculateHandler", "error", r)
+			slog.Error("panic in calculateHandler", "error", r, "trace", debug.Stack())
 			ctx.Error(internalServerError, fasthttp.StatusInternalServerError)
 		}
 	}()
