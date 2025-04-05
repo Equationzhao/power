@@ -114,7 +114,7 @@ function showChartSettingsPopup() {
                     <label class="switch ${!settings.showOriginalData ? 'disabled-switch' : ''}">
                         <input type="checkbox" id="showOutliers" ${settings.showOutliers ? 'checked' : ''} ${!settings.showOriginalData ? 'disabled' : ''}>
                         <span class="slider round"></span>
-                        <span class="tooltip-text">需要开启"展示原始值"才能使用此功能</span>
+                        <span class="tooltip-text">请先打开"展示原始值"</span>
                     </label>
                 </div>
                 <div class="settings-option">

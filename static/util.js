@@ -11,11 +11,38 @@ function createPointRow() {
         <input type="number" id="${timeId}" name="${timeId}" class="time-input" min="0.1" step="any">
         <label for="${powerId}">功率 (瓦):</label>
         <input type="number" id="${powerId}" name="${powerId}" class="power-input" min="0.1" step="any">
-        <button type="button" class="remove-btn" title="移除此数据点">
+        <button type="button" class="remove-btn">
             ✕
             <span class="tooltip">至少需要3个数据点</span>
         </button>
     `;
+    const tooltip = row.querySelector('.tooltip');
+    if (tooltip) {
+        tooltip.style.position = 'fixed';
+        tooltip.style.padding = '8px 8px';
+        tooltip.style.whiteSpace = 'nowrap';
+        tooltip.style.height = '30px';
+        
+        const removeBtn = row.querySelector('.remove-btn');
+        if (removeBtn) {
+            removeBtn.addEventListener('mouseenter', function(e) {
+                if (this.classList.contains('disabled')) {
+                    const rect = this.getBoundingClientRect();
+                    tooltip.style.left = (rect.left + rect.width/2) + 'px';
+                    tooltip.style.top = (rect.top - 20) + 'px';
+                    tooltip.style.transform = 'translateX(-50%)';
+                    tooltip.style.visibility = 'visible';
+                    tooltip.style.opacity = '1';
+                    tooltip.style.zIndex = '1000';
+                }
+            });
+            
+            removeBtn.addEventListener('mouseleave', function() {
+                tooltip.style.visibility = 'hidden';
+                tooltip.style.opacity = '0';
+            });
+        }
+    }
     return row;
 }
 

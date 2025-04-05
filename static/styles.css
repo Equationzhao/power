@@ -880,7 +880,7 @@ footer {
 }
 
 .settings-popup-content {
-    overflow: hidden;
+    overflow: visible;
 }
 
 .settings-popup-header {
@@ -899,6 +899,7 @@ footer {
 
 .settings-options {
     display: flex;
+    overflow: visible;
     flex-direction: column;
     gap: var(--spacing-m);
     margin: var(--spacing-l);
