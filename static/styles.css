@@ -883,16 +883,18 @@ footer {
 /* 数据点操作按钮区域 */
 .data-actions {
     display: flex;
-    justify-content: space-between;
-    gap: var(--spacing-m);
-    margin-top: var(--spacing-m);
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
 .data-btn {
     flex: 1;
-    text-align: center;
-    padding: var(--spacing-m) var(--spacing-l);
-    font-weight: 500;
+}
+
+/* 全宽按钮 */
+.full-width {
+    width: 100%;
+    display: block;
 }
 
 /* 覆盖原有按钮样式，确保一致性 */

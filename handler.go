@@ -48,17 +48,34 @@ func calculateHandler(ctx *fasthttp.RequestCtx) {
 	// 计算功率-时间曲线
 	var powerTimeCurve []PowerTimePoint
 	timeMap := make(map[float64]struct{})
-	for t := 1.0; t <= 60*60; t *= 1.2 {
+	for t := 1.0; t <= 10; t *= 1.2 {
 		timeMap[t] = struct{}{}
 	}
 	// 插入固定的几个重要时间点
-	// 1s 5s 10s 15s 20s 30s 1min 以及 2-120 每分钟, 还有用户输入的时间点
-	fixedPoints := []float64{1, 5, 10, 15, 20, 30, 60}
-	for _, t := range fixedPoints {
-		timeMap[t] = struct{}{}
+	// 1s - 60s
+	// 60s 之后每隔 5s 一个点
+	// 2m 之后每隔 10s 一个点
+	// 5m 之后每隔 30s 一个点
+	// 10m 之后每隔 1min 一个点
+	// 1h 之后每隔 5min 一个点
+	// 生成代码
+	for i := 1; i <= 60; i++ {
+		timeMap[float64(i)] = struct{}{}
 	}
-	for m := 2; m <= 120; m++ {
-		timeMap[float64(m*60)] = struct{}{}
+	for i := 60; i <= 120; i += 5 {
+		timeMap[float64(i)] = struct{}{}
+	}
+	for i := 120; i <= 300; i += 10 {
+		timeMap[float64(i)] = struct{}{}
+	}
+	for i := 300; i <= 600; i += 30 {
+		timeMap[float64(i)] = struct{}{}
+	}
+	for i := 600; i <= 3600; i += 60 {
+		timeMap[float64(i)] = struct{}{}
+	}
+	for i := 3600; i <= 7200; i += 300 {
+		timeMap[float64(i)] = struct{}{}
 	}
 	for _, t := range data.PT {
 		timeMap[t.Time] = struct{}{}
