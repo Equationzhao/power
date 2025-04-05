@@ -20,11 +20,13 @@ export function showPowerTimeCurvePopup(curveData, originalPoints, modelParams, 
         <div class="info-popup-header">
             <h3>功率曲线</h3>
             <div class="popup-actions">
+                <button id="chartSettingsBtn" class="btn btn-secondary">曲线设置</button>
                 <div class="download-container">
                     <button id="downloadChartBtn" class="btn btn-secondary">下载</button>
                     <div class="download-options" id="downloadOptions">
                         <button class="download-option" data-format="png">PNG</button>
                         <button class="download-option" data-format="jpg">JPG</button>
+                        <button class="download-option" data-format="csv">CSV</button>
                     </div>
                 </div> 
                 <button class="info-popup-close">&times;</button>
@@ -37,20 +39,24 @@ export function showPowerTimeCurvePopup(curveData, originalPoints, modelParams, 
 
     document.body.appendChild(popup);
 
-    // 关闭弹窗事件
-    popup.querySelector('.info-popup-close').addEventListener('click', function() {
-        popup.remove();
+    // 防止点击弹窗内部关闭弹窗
+    popup.addEventListener('click', function(e) {
+        e.stopPropagation();
     });
 
-    // 点击外部关闭弹窗
-    setTimeout(() => {
-        document.addEventListener('click', function closeChartPopup(e) {
-            if (popup && !popup.contains(e.target) && !e.target.matches('#showPowerTimeCurve')) {
-                popup.remove();
-                document.removeEventListener('click', closeChartPopup);
-            }
-        });
-    }, 100);
+    // 关闭弹窗事件
+    popup.querySelector('.info-popup-close').addEventListener('click', function() {
+        // 先关闭设置弹窗（如果存在）
+        const settingsPopup = document.getElementById('chartSettingsPopup');
+        if (settingsPopup) {
+            settingsPopup.remove();
+        }
+        
+        // 清除全局图表实例引用
+        window.powerChart = null;
+        
+        popup.remove();
+    });
 
     // 渐入显示
     setTimeout(() => {
@@ -58,10 +64,185 @@ export function showPowerTimeCurvePopup(curveData, originalPoints, modelParams, 
     }, 10);
 
     // 绘制功率曲线图
+    loadChartSettings();
     drawPowerTimeCurve(curveData, originalPoints, modelParams, outliers);
     
     // 处理下载按钮逻辑
     setupDownloadButton();
+    
+    // 设置曲线设置按钮点击事件
+    document.getElementById('chartSettingsBtn').addEventListener('click', function(e) {
+        e.stopPropagation(); // 防止事件冒泡
+        showChartSettingsPopup();
+    });
+}
+
+/**
+ * 显示曲线设置弹窗
+ */
+function showChartSettingsPopup() {
+    // 如果已有弹窗，则移除
+    const existingSettingsPopup = document.getElementById('chartSettingsPopup');
+    if (existingSettingsPopup) {
+        existingSettingsPopup.remove();
+        return;
+    }
+    
+    // 获取当前设置
+    const settings = getChartSettings();
+    
+    // 创建设置弹窗
+    const settingsPopup = document.createElement('div');
+    settingsPopup.id = 'chartSettingsPopup';
+    settingsPopup.className = 'settings-popup';
+    settingsPopup.innerHTML = `
+        <div class="settings-popup-content">
+            <div class="settings-popup-header">
+                <h3>曲线设置</h3>
+                <button class="info-popup-close">&times;</button>
+            </div>
+            <div class="settings-options">
+                <div class="settings-option">
+                    <label for="showOriginalData">展示原始值</label>
+                    <label class="switch">
+                        <input type="checkbox" id="showOriginalData" ${settings.showOriginalData ? 'checked' : ''}>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="settings-option settings-option-nested ${!settings.showOriginalData ? 'disabled' : ''}">
+                    <label for="showOutliers" class="${!settings.showOriginalData ? 'disabled' : ''}">展示异常值</label>
+                    <label class="switch">
+                        <input type="checkbox" id="showOutliers" ${settings.showOutliers ? 'checked' : ''} ${!settings.showOriginalData ? 'disabled' : ''}>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <div class="settings-option">
+                    <label for="showNonIntegerTime">展示非整数时间</label>
+                    <label class="switch">
+                        <input type="checkbox" id="showNonIntegerTime" ${settings.showNonIntegerTime ? 'checked' : ''}>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(settingsPopup);
+    
+    // 防止点击设置弹窗内部关闭曲线弹窗
+    settingsPopup.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+    
+    // 关闭按钮点击事件
+    settingsPopup.querySelector('.info-popup-close').addEventListener('click', function(e) {
+        e.stopPropagation();
+        
+        // 在关闭之前应用当前设置
+        // applySettings();
+        
+        settingsPopup.remove();
+    });
+    
+    // 设置开关联动逻辑和即时生效
+    const showOriginalDataSwitch = document.getElementById('showOriginalData');
+    const showOutliersSwitch = document.getElementById('showOutliers');
+    const showNonIntegerTimeSwitch = document.getElementById('showNonIntegerTime');
+    
+    // 展示原始值开关逻辑
+    showOriginalDataSwitch.addEventListener('change', function() {
+        // 更新异常值开关状态
+        if (!this.checked) {
+            showOutliersSwitch.checked = false;
+            showOutliersSwitch.disabled = true;
+            document.querySelector('label[for="showOutliers"]').classList.add('disabled');
+            document.querySelector('.settings-option-nested').classList.add('disabled');
+        } else {
+            showOutliersSwitch.disabled = false;
+            document.querySelector('label[for="showOutliers"]').classList.remove('disabled');
+            document.querySelector('.settings-option-nested').classList.remove('disabled');
+        }
+        
+        // 立即应用设置
+        applySettings();
+    });
+    
+    // 展示异常值开关逻辑
+    showOutliersSwitch.addEventListener('change', function() {
+        // 立即应用设置
+        applySettings();
+    });
+    
+    // 展示非整数时间开关逻辑
+    showNonIntegerTimeSwitch.addEventListener('change', function() {
+        // 立即应用设置
+        applySettings();
+    });
+    
+    // 应用设置并重绘图表
+    function applySettings() {
+        const newSettings = {
+            showOriginalData: showOriginalDataSwitch.checked,
+            showOutliers: showOutliersSwitch.checked,
+            showNonIntegerTime: showNonIntegerTimeSwitch.checked
+        };
+        
+        // 保存设置到localStorage和全局变量中
+        saveChartSettings(newSettings);
+        window.chartSettings = newSettings;
+        
+        // 重新绘制图表
+        const chartData = window.calculatedData.power_time_curve;
+        const originalPoints = collectPowerTimePoints();
+        const modelParams = {
+            cp: window.calculatedData.cp,
+            pmax: window.calculatedData.pmax
+        };
+        const outliers = window.calculatedData.outliers;
+        
+        drawPowerTimeCurve(chartData, originalPoints, modelParams, outliers);
+    }
+}
+
+/**
+ * 获取图表设置
+ * @returns {Object} 图表设置对象
+ */
+function getChartSettings() {
+    const defaultSettings = {
+        showOriginalData: true,
+        showOutliers: true,
+        showNonIntegerTime: true
+    };
+    
+    const savedSettings = localStorage.getItem('chartSettings');
+    if (savedSettings) {
+        try {
+            return JSON.parse(savedSettings);
+        } catch (e) {
+            console.error('解析图表设置出错:', e);
+            return defaultSettings;
+        }
+    }
+    
+    return defaultSettings;
+}
+
+/**
+ * 保存图表设置
+ * @param {Object} settings - 图表设置对象
+ */
+function saveChartSettings(settings) {
+    localStorage.setItem('chartSettings', JSON.stringify(settings));
+}
+
+/**
+ * 加载图表设置
+ */
+function loadChartSettings() {
+    if (!window.chartSettings) {
+        window.chartSettings = getChartSettings();
+    }
 }
 
 /**
@@ -97,17 +278,51 @@ function setupDownloadButton() {
 
 /**
  * 下载图表为指定格式
- * @param {string} format - 图表格式（png 或 jpg）
+ * @param {string} format - 图表格式（png, jpg 或 csv）
  */
 function downloadChart(format) {
     const canvas = document.getElementById('powerTimeCurveChart');
-    let dataURL;
     
     // 获取当前主题模式
     const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
     
     // 获取CP值用于文件名
     const cpValue = window.calculatedData ? window.calculatedData.cp.toFixed(1) : '0';
+    
+    // 处理CSV下载
+    if (format === 'csv') {
+        // 获取拟合曲线数据
+        const curveData = window.calculatedData ? window.calculatedData.power_time_curve : [];
+        if (!curveData || curveData.length === 0) {
+            alert('没有可用的拟合数据');
+            return;
+        }
+        
+        // 创建CSV内容
+        let csvContent = 'time,power\n';
+        curveData.forEach(point => {
+            csvContent += `${point.time},${point.power}\n`;
+        });
+        
+        // 创建Blob对象
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        
+        // 创建下载链接
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(blob);
+        downloadLink.download = `拟合功率曲线_cp_${cpValue}.csv`;
+        
+        // 模拟点击下载
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        
+        // 释放URL对象
+        URL.revokeObjectURL(downloadLink.href);
+        return;
+    }
+    
+    let dataURL;
     
     if (format === 'jpg') {
         // 创建适合当前主题的背景
@@ -166,46 +381,122 @@ function downloadChart(format) {
  */
 function drawPowerTimeCurve(curveData, originalPoints, modelParams, outliers) {
     const ctx = document.getElementById('powerTimeCurveChart').getContext('2d');
+    const settings = window.chartSettings || getChartSettings();
     
-    // 转换曲线数据为适合图表显示的格式
-    const chartData = curveData.map(point => ({
+    // 如果图表已存在，只更新数据而不重新创建
+    if (window.powerChart) {
+        updateChartDatasets(curveData, originalPoints, modelParams, outliers, settings);
+    } else {
+        // 首次创建图表
+        createNewChart(ctx, curveData, originalPoints, modelParams, outliers, settings);
+    }
+}
+
+/**
+ * 更新图表数据集，而不重新创建图表
+ * @param {Array} curveData - 功率曲线数据
+ * @param {Array} originalPoints - 原始数据点
+ * @param {Object} modelParams - 模型参数，包含cp和pmax
+ * @param {Array} outliers - 异常值数据点
+ * @param {Object} settings - 图表设置
+ */
+function updateChartDatasets(curveData, originalPoints, modelParams, outliers, settings) {
+    const chart = window.powerChart;
+    if (!chart) return;
+    
+    // 禁用所有动画
+    chart.options.animation = false;
+    chart.options.transitions = {
+        active: {
+            animation: {
+                duration: 0
+            }
+        }
+    };
+    
+    // 过滤非整数时间点（如果需要）
+    let filteredCurveData = curveData;
+    if (!settings.showNonIntegerTime) {
+        filteredCurveData = curveData.filter(point => Number.isInteger(point.time));
+    }
+    
+    // 更新拟合曲线数据（始终保留）
+    chart.data.datasets[0].data = filteredCurveData.map(point => ({
         x: point.time,
         y: point.power
     }));
     
-    // 转换异常值数据为适合图表显示的格式
-    const outlierData = outliers ? outliers.map(point => ({
-        x: point.time,
-        y: point.power
-    })) : [];
-    
-    // 获取模型参数
-    const cpValue = modelParams.cp;
-    const pmaxValue = modelParams.pmax;
-
-    // 添加CP渐近线数据
-    const cpLineData = [
-        { x: 1, y: cpValue },    // 从1秒开始(对数轴的最小值)
-        { x: 3600, y: cpValue }  // 到3600秒(1小时)结束
+    // 更新CP线数据（始终保留）
+    chart.data.datasets[1].data = [
+        { x: 1, y: modelParams.cp },
+        { x: 3600, y: modelParams.cp }
     ];
-
-    new Chart(ctx, {
-        type: 'scatter',
-        data: {
-            datasets: [
-                {
-                    label: '拟合功率',
-                    data: chartData,
-                    borderColor: 'rgba(52, 152, 219, 1)',
-                    backgroundColor: 'rgba(52, 152, 219, 0.5)',
-                    borderWidth: 2,
-                    showLine: true,
-                    tension: 0,
-                    pointRadius: 0,
-                    pointHoverRadius: 8,
-                    hiddenInLegend: true,
-                },
-                {
+    
+    // 检查原始数据点数据集是否存在
+    if (chart.data.datasets.length > 2) {
+        // 原始数据集存在，更新或隐藏
+        if (settings.showOriginalData) {
+            chart.data.datasets[2].data = originalPoints;
+            chart.data.datasets[2].hidden = false;
+        } else {
+            chart.data.datasets[2].hidden = true;
+        }
+        
+        // 检查异常值数据集是否存在
+        if (chart.data.datasets.length > 3) {
+            // 异常值数据集存在，更新或隐藏
+            if (settings.showOriginalData && settings.showOutliers) {
+                const outlierData = outliers.map(point => ({
+                    x: point.time,
+                    y: point.power
+                }));
+                chart.data.datasets[3].data = outlierData;
+                chart.data.datasets[3].hidden = false;
+            } else {
+                chart.data.datasets[3].hidden = true;
+            }
+        } else if (settings.showOriginalData && settings.showOutliers && outliers.length > 0) {
+            // 需要添加异常值数据集
+            const outlierData = outliers.map(point => ({
+                x: point.time,
+                y: point.power
+            }));
+            chart.data.datasets.push({
+                label: '异常值',
+                data: outlierData,
+                borderColor: 'rgba(155, 89, 182, 1)',
+                backgroundColor: 'rgba(155, 89, 182, 0.8)',
+                borderWidth: 1,
+                showLine: false,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointStyle: 'triangle',
+                hiddenInLegend: true,
+            });
+        }
+    } else {
+        // 需要添加原始数据点数据集
+        if (settings.showOriginalData) {
+            chart.data.datasets.push({
+                label: '原始数据',
+                data: originalPoints,
+                borderColor: 'rgba(231, 76, 60, 1)',
+                backgroundColor: 'rgba(231, 76, 60, 0.8)',
+                borderWidth: 1,
+                showLine: false,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointStyle: 'star',
+                hiddenInLegend: true,
+            });
+            
+            // 如果需要，添加异常值数据集
+            if (settings.showOutliers && outliers.length > 0) {
+                const outlierData = outliers.map(point => ({
+                    x: point.time,
+                    y: point.power
+                }));
+                chart.data.datasets.push({
                     label: '异常值',
                     data: outlierData,
                     borderColor: 'rgba(155, 89, 182, 1)',
@@ -216,42 +507,131 @@ function drawPowerTimeCurve(curveData, originalPoints, modelParams, outliers) {
                     pointHoverRadius: 8,
                     pointStyle: 'triangle',
                     hiddenInLegend: true,
-                },
-                {
-                    label: '原始数据',
-                    data: originalPoints,
-                    borderColor: 'rgba(231, 76, 60, 1)',
-                    backgroundColor: 'rgba(231, 76, 60, 0.8)',
-                    borderWidth: 1,
-                    showLine: false,
-                    pointRadius: 6,
-                    pointHoverRadius: 8,
-                    pointStyle: 'star',
-                    hiddenInLegend: true,
-                },
-                {
-                    label: '临界功率 (CP)',
-                    data: cpLineData,
-                    borderColor: 'rgb(0, 0, 0)',
-                    borderWidth: 2,
-                    borderDash: [6, 4],  // 虚线样式
-                    showLine: true,
-                    fill: false,
-                    pointRadius: 0,
-                    tension: 0,
-                    hoverEnabled: false,
-                    hitRadius: 0,
-                    pointHoverRadius: 0,
-                    pointHitRadius: 0,
-                    pointHoverBorderWidth: 0,
-                    hiddenInLegend: true,
-                    meta: { skipTooltip: true }
-                }
-            ]
+                });
+            }
+        }
+    }
+    
+    // 更新结果显示插件的数据
+    chart.options.plugins.customResultsDisplay.cpValue = modelParams.cp;
+    chart.options.plugins.customResultsDisplay.pmaxValue = modelParams.pmax;
+    
+    // 应用更新，不使用动画
+    chart.update('none');
+}
+
+/**
+ * 创建新的图表实例
+ * @param {CanvasRenderingContext2D} ctx - Canvas上下文
+ * @param {Array} curveData - 功率曲线数据
+ * @param {Array} originalPoints - 原始数据点
+ * @param {Object} modelParams - 模型参数，包含cp和pmax
+ * @param {Array} outliers - 异常值数据点
+ * @param {Object} settings - 图表设置
+ */
+function createNewChart(ctx, curveData, originalPoints, modelParams, outliers, settings) {
+    let filteredCurveData = curveData;
+    if (!settings.showNonIntegerTime) {
+        filteredCurveData = curveData.filter(point => Number.isInteger(point.time));
+    }
+    
+    // 转换曲线数据为适合图表显示的格式
+    const chartData = filteredCurveData.map(point => ({
+        x: point.time,
+        y: point.power
+    }));
+    
+    // 转换异常值数据为适合图表显示的格式
+    const outlierData = (outliers && settings.showOutliers && settings.showOriginalData) ? outliers.map(point => ({
+        x: point.time,
+        y: point.power
+    })) : [];
+    
+    // 获取模型参数
+    const cpValue = modelParams.cp;
+    const pmaxValue = modelParams.pmax;
+
+    // 添加CP渐近线数据
+    const cpLineData = [
+        { x: 1, y: cpValue },
+        { x: 3600, y: cpValue }
+    ];
+
+    // 准备数据集
+    const datasets = [
+        {
+            label: '拟合功率',
+            data: chartData,
+            borderColor: 'rgba(52, 152, 219, 1)',
+            backgroundColor: 'rgba(52, 152, 219, 0.5)',
+            borderWidth: 2,
+            showLine: true,
+            tension: 0,
+            pointRadius: 0,
+            pointHoverRadius: 8,
+            hiddenInLegend: true,
+        },
+        {
+            label: '临界功率 (CP)',
+            data: cpLineData,
+            borderColor: 'rgb(0, 0, 0)',
+            borderWidth: 2,
+            borderDash: [6, 4],
+            showLine: true,
+            fill: false,
+            pointRadius: 0,
+            tension: 0,
+            hoverEnabled: false,
+            hitRadius: 0,
+            pointHoverRadius: 0,
+            pointHitRadius: 0,
+            pointHoverBorderWidth: 0,
+            hiddenInLegend: true,
+            meta: { skipTooltip: true }
+        }
+    ];
+    
+    // 根据设置添加原始数据和异常值
+    if (settings.showOriginalData) {
+        datasets.push({
+            label: '原始数据',
+            data: originalPoints,
+            borderColor: 'rgba(231, 76, 60, 1)',
+            backgroundColor: 'rgba(231, 76, 60, 0.8)',
+            borderWidth: 1,
+            showLine: false,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+            pointStyle: 'star',
+            hiddenInLegend: true,
+        });
+        
+        if (settings.showOutliers && outlierData.length > 0) {
+            datasets.push({
+                label: '异常值',
+                data: outlierData,
+                borderColor: 'rgba(155, 89, 182, 1)',
+                backgroundColor: 'rgba(155, 89, 182, 0.8)',
+                borderWidth: 1,
+                showLine: false,
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                pointStyle: 'triangle',
+                hiddenInLegend: true,
+            });
+        }
+    }
+
+    // 创建新的Chart实例并保存到全局变量
+    window.powerChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: datasets
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            // animation: false, // 禁用所有动画
             interaction: {
                 mode: 'nearest',
                 intersect: false,

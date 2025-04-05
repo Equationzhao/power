@@ -98,7 +98,7 @@ function getInfoContent(infoType) {
             `
         },
         tau: {
-            title: "时间常数 (Tau τ)",
+            title: "时间常数 (Tau)",
             body: `
                 <h4>定义：</h4>
                 <p>描述功率从最大瞬时功率衰减到临界功率的时间特征，单位为秒。</p>

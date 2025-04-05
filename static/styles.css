@@ -857,6 +857,89 @@ footer {
     background-color: var(--light-bg);
 }
 
+/* 设置弹窗样式 */
+.settings-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: var(--popup-bg);
+    border-radius: var(--radius-m);
+    box-shadow: var(--shadow);
+    z-index: 1100; /* 确保在其他弹窗上方 */
+    padding: 0;
+    min-width: 300px;
+    max-width: 90%;
+    transition: background-color 0.3s ease;
+}
+
+.settings-popup-content {
+    overflow: hidden;
+}
+
+.settings-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-s) var(--spacing-l);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-popup-header h3 {
+    margin: 0;
+    color: var(--primary-dark);
+    font-size: var(--font-size-l);
+}
+
+.settings-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-m);
+    margin: var(--spacing-l);
+}
+
+.settings-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.settings-option label {
+    margin-bottom: 0;
+}
+
+.settings-option-nested {
+    padding-left: var(--spacing-xl);
+    position: relative;
+}
+
+.settings-option-nested::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    width: 10px;
+    height: 1px;
+    background-color: var(--text-light);
+}
+
+.settings-option.disabled,
+.settings-option label.disabled {
+    color: var(--text-light);
+    opacity: 0.6;
+}
+
+.settings-buttons {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-m);
+}
+
+/* 确保设置弹窗按钮样式一致 */
+.settings-buttons .btn {
+    min-width: 100px;
+}
+
 /* 响应式调整 */
 @media (max-width: 767px) {
     .zones-table {
@@ -907,18 +990,40 @@ footer {
     transition: background-color 0.3s ease;
 }
 
+/* 图表更新动画 */
+.chart-updating {
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+/* 图表蒙版样式 */
+.chart-mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+html[data-theme='dark'] .chart-mask {
+    background-color: rgba(30, 30, 30, 0.7);
+}
+
 .chart-content {
+    position: relative;
     padding: var(--spacing-s);
     height: calc(90vh - 60px);
     color: var(--chart-text-color);
 }
 
-.chart-grid {
-    color: var(--chart-grid-color);
-}
-
 #powerTimeCurveChart {
     height: 100% !important;
+    transition: opacity 0.25s ease;
 }
 
 /* 数据点操作按钮区域 */

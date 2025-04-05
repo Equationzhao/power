@@ -1,3 +1,4 @@
 tmp/
 *.fasthttp.br
+*.fasthttp.gz
 *.csv
