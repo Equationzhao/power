@@ -58,7 +58,7 @@ func WithOutlierDetect() ModelOption {
 func New(options ...ModelOption) *CriticalPowerModel {
 	m := &CriticalPowerModel{
 		numRuns:       DefaultNumRuns,
-		outlierDetect: true, // 默认开启异常值检测
+		outlierDetect: false,
 	}
 
 	for _, option := range options {

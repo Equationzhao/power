@@ -3,10 +3,11 @@ package main
 import "github.com/Equationzhao/power/criticalpower"
 
 func CalculateModel(data []criticalpower.PowerTimePoint, runtimes int, outlierDetect bool) (*criticalpower.CriticalPowerModel, error) {
-	model := criticalpower.New(
-		criticalpower.WithRunTimes(runtimes),
-		criticalpower.WithOutlierDetect(),
-	)
+	option := []criticalpower.ModelOption{criticalpower.WithRunTimes(runtimes)}
+	if outlierDetect {
+		option = append(option, criticalpower.WithOutlierDetect())
+	}
+	model := criticalpower.New(option...)
 	if err := model.Fit(data); err != nil {
 		return nil, err
 	}
