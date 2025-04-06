@@ -48,7 +48,8 @@ func calculateHandler(ctx *fasthttp.RequestCtx) {
 	// 计算功率-时间曲线
 	var powerTimeCurve []PowerTimePoint
 	timeMap := make(map[float64]struct{})
-	for t := 1.0; t <= 10; t *= 1.2 {
+	for t := 1.0; t <= 7200; t *= 1.15 {
+		t = float64(int(t*10)) / 10
 		timeMap[t] = struct{}{}
 	}
 	// 插入固定的几个重要时间点
