@@ -22,7 +22,7 @@ function getInfoContent(infoType) {
             body: `
                 <h4>定义：</h4>
                 <p>临界功率(CP)与体重的比值，单位为瓦特/千克(W/kg)。</p>
-                <p>$$PWR = \\frac{CP}{(Weight}$$</p>
+                <p>$$PWR = \\frac{CP}{Weight}$$</p>
                 
                 <h4>意义：</h4>
                 <ul>
