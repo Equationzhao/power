@@ -53,11 +53,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // 使用示例数据
     useExampleDataBtn.addEventListener('click', function () {
         const exampleData = [
-            { Time: 100, Power: 446 },
-            { Time: 172, Power: 385 },
-            { Time: 434, Power: 324 },
-            { Time: 857, Power: 290 },
-            { Time: 1361, Power: 280 },
+            { Time: 1, Power: 768 },
+            { Time: 5, Power: 697 },
+            { Time: 30, Power: 482 },
+            { Time: 60, Power: 337 },
+            { Time: 300, Power: 259 },
+            { Time: 600, Power: 236 },
+            { Time: 1200, Power: 233 },
         ];
 
         // 清除现有行
