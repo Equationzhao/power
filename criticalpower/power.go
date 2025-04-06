@@ -190,12 +190,17 @@ func (m *CriticalPowerModel) Fit(data []PowerTimePoint) error {
 	}
 	if m.outlierDetect && len(m.Data) > 20 {
 		// 重新拟合模型，排除异常值
+		nonMaximalEffortCount := 0
 		for range 10 {
 			m.detectOutliers(3)
-			m.detectNonMaximalEffort()
+			count := m.detectNonMaximalEffort()
 			if len(m.Data)-len(m.Outliers) < 3 {
 				break
 			}
+			if count == nonMaximalEffortCount {
+				break
+			}
+			nonMaximalEffortCount = count
 			err = m.fit()
 			if err != nil {
 				return err

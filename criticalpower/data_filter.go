@@ -132,7 +132,7 @@ func (m *CriticalPowerModel) handleDataJump() {
 	}
 }
 
-func (m *CriticalPowerModel) detectNonMaximalEffort() {
+func (m *CriticalPowerModel) detectNonMaximalEffort() (count int) {
 	data := m.Data
 	if m.Outliers == nil {
 		m.Outliers = make(map[int]struct{})
@@ -142,7 +142,9 @@ func (m *CriticalPowerModel) detectNonMaximalEffort() {
 		actualPower := point.Power
 
 		if (point.Time > 600 && actualPower < 0.9*expectedPower) || point.Power < m.CP {
+			count++
 			m.Outliers[i] = struct{}{}
 		}
 	}
+	return count
 }
